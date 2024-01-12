@@ -163,7 +163,7 @@ class CostAws:
                                 "ResourceGroupId": "",
                                 "Product": "",
                                 "Meter": "",
-                                "Tags": [],
+                                "Tags": "[]",
                                 "Cost": "",
                                 "CostUSD": "",
                                 "Currency": "",
@@ -298,6 +298,12 @@ for account in accounts:
         state = cost_aws.generate_csv()
         if cost_aws.error:
             logger.error(cost_aws.message)
+        else:
+            cost_file = cost_aws.output_file_name
+            storage_mgr.upload_blob(
+                bronze_container, cost_file, os.path.basename(cost_file)
+            )
+
         state_file_name = (
             "state"
             + "_"
@@ -308,12 +314,8 @@ for account in accounts:
             + account_conf["account_name"]
             + ".json"
         )
+
         if not state["execution"]["error"]:
-            cost_file = cost_aws.output_file_name
-            storage_mgr.upload_blob(
-                bronze_container, cost_file, os.path.basename(cost_file)
-            )
-        else:
             storage_mgr.download_blob(
                 bronze_container,
                 "logs/" + state_file_name,
@@ -332,5 +334,6 @@ for account in accounts:
         storage_mgr.upload_blob(
             bronze_container, tmp_dir + "/" + state_file_name, "logs/" + state_file_name
         )
+
 
 logger.info("End")
