@@ -1,7 +1,6 @@
 import random, uuid
 import pandas as pd
 
-
 class ResourceAzure:
     def __init__(self, config) -> None:
         self.organization_name = None
