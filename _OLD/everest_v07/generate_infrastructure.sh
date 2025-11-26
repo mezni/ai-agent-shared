@@ -6,181 +6,13 @@ echo "Generating infrastructure layer..."
 
 cd auth-service
 
-# Infrastructure mod.rs
-cat > src/infrastructure/mod.rs << 'EOF'
-pub mod config;
-pub mod database;
-pub mod auth;
-pub mod audit;
-pub mod errors;
-
-// Re-exports
-pub use config::Config;
-pub use database::{DatabasePool, UserRepositoryImpl, CompanyRepositoryImpl, AuditLogRepositoryImpl};
-pub use auth::KeycloakClient;
-pub use errors::InfrastructureError;
-EOF
-
-# Infrastructure errors
-cat > src/infrastructure/errors.rs << 'EOF'
-use thiserror::Error;
-
-#[derive(Error, Debug)]
-pub enum InfrastructureError {
-    #[error("Database error: {0}")]
-    DatabaseError(#[from] sqlx::Error),
-    
-    #[error("Configuration error: {0}")]
-    ConfigError(String),
-    
-    #[error("Keycloak error: {0}")]
-    KeycloakError(String),
-    
-    #[error("HTTP client error: {0}")]
-    HttpClientError(#[from] reqwest::Error),
-    
-    #[error("JWT error: {0}")]
-    JwtError(#[from] jsonwebtoken::errors::Error),
-    
-    #[error("Serialization error: {0}")]
-    SerializationError(#[from] serde_json::Error),
-    
-    #[error("IO error: {0}")]
-    IoError(#[from] std::io::Error),
-    
-    #[error("Connection pool error: {0}")]
-    PoolError(String),
-}
-
-impl InfrastructureError {
-    pub fn code(&self) -> &'static str {
-        match self {
-            Self::DatabaseError(_) => "INFRA_DATABASE_ERROR",
-            Self::ConfigError(_) => "INFRA_CONFIG_ERROR",
-            Self::KeycloakError(_) => "INFRA_KEYCLOAK_ERROR",
-            Self::HttpClientError(_) => "INFRA_HTTP_CLIENT_ERROR",
-            Self::JwtError(_) => "INFRA_JWT_ERROR",
-            Self::SerializationError(_) => "INFRA_SERIALIZATION_ERROR",
-            Self::IoError(_) => "INFRA_IO_ERROR",
-            Self::PoolError(_) => "INFRA_POOL_ERROR",
-        }
-    }
-}
-EOF
-
-# Configuration
-cat > src/infrastructure/config.rs << 'EOF'
-use serde::Deserialize;
-use std::env;
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct Config {
-    pub server: ServerConfig,
-    pub database: DatabaseConfig,
-    pub keycloak: KeycloakConfig,
-    pub jwt: JwtConfig,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct ServerConfig {
-    pub host: String,
-    pub port: u16,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct DatabaseConfig {
-    pub host: String,
-    pub port: u16,
-    pub username: String,
-    pub password: String,
-    pub database_name: String,
-    pub max_connections: u32,
-}
-
-impl DatabaseConfig {
-    pub fn connection_string(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}/{}",
-            self.username, self.password, self.host, self.port, self.database_name
-        )
-    }
-    
-    pub fn connection_string_without_db(&self) -> String {
-        format!(
-            "postgres://{}:{}@{}:{}",
-            self.username, self.password, self.host, self.port
-        )
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct KeycloakConfig {
-    pub server_url: String,
-    pub realm: String,
-    pub client_id: String,
-    pub client_secret: String,
-    pub admin_username: String,
-    pub admin_password: String,
-}
-
-impl KeycloakConfig {
-    pub fn admin_token_url(&self) -> String {
-        format!(
-            "{}/realms/{}/protocol/openid-connect/token",
-            self.server_url, self.realm
-        )
-    }
-    
-    pub fn admin_users_url(&self) -> String {
-        format!(
-            "{}/admin/realms/{}/users",
-            self.server_url, self.realm
-        )
-    }
-    
-    pub fn token_url(&self) -> String {
-        format!(
-            "{}/realms/{}/protocol/openid-connect/token",
-            self.server_url, self.realm
-        )
-    }
-    
-    pub fn user_info_url(&self) -> String {
-        format!(
-            "{}/realms/{}/protocol/openid-connect/userinfo",
-            self.server_url, self.realm
-        )
-    }
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct JwtConfig {
-    pub secret: String,
-    pub issuer: String,
-    pub audience: String,
-    pub expiration_days: i64,
-}
-
-impl Config {
-    pub fn load() -> Result<Self, crate::infrastructure::errors::InfrastructureError> {
-        let environment = env::var("APP_ENVIRONMENT").unwrap_or_else(|_| "development".to_string());
-        
-        let config = config::Config::builder()
-            .add_source(config::File::with_name("config/default"))
-            .add_source(config::File::with_name(&format!("config/{}", environment)).required(false))
-            .add_source(config::Environment::with_prefix("APP"))
-            .build()?;
-        
-        config.try_deserialize()
-            .map_err(|e| crate::infrastructure::errors::InfrastructureError::ConfigError(e.to_string()))
-    }
-}
-EOF
+# Create infrastructure directories for missing modules
+mkdir -p src/infrastructure/{database,auth,audit}
 
 # Database
 cat > src/infrastructure/database.rs << 'EOF'
 use async_trait::async_trait;
-use sqlx::{postgres::PgPoolOptions, PgPool, Row};
+use sqlx::{postgres::PgPoolOptions, PgPool};
 use uuid::Uuid;
 
 use crate::domain::entities::{User, Company, AuditLog};
@@ -212,175 +44,175 @@ impl UserRepositoryImpl {
 #[async_trait]
 impl UserRepository for UserRepositoryImpl {
     async fn create(&self, user: &User) -> Result<User, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             INSERT INTO users (id, keycloak_id, username, email, role, company_id, email_verified, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
-            RETURNING *
+            RETURNING id, keycloak_id, username, email, role, company_id, email_verified, created_at, updated_at
             "#,
-            user.id,
-            user.keycloak_id,
-            user.username,
-            user.email,
-            user.role.to_string(),
-            user.company_id,
-            user.email_verified,
-            user.created_at,
-            user.updated_at
         )
+        .bind(user.id)
+        .bind(&user.keycloak_id)
+        .bind(&user.username)
+        .bind(&user.email)
+        .bind(user.role.to_string())
+        .bind(user.company_id)
+        .bind(user.email_verified)
+        .bind(user.created_at)
+        .bind(user.updated_at)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(User {
-            id: row.id,
-            keycloak_id: row.keycloak_id,
-            username: row.username,
-            email: row.email,
-            role: row.role.parse().map_err(|e: String| DomainError::InvalidUserRole(e))?,
-            company_id: row.company_id,
-            email_verified: row.email_verified,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            id: row.get("id"),
+            keycloak_id: row.get("keycloak_id"),
+            username: row.get("username"),
+            email: row.get("email"),
+            role: row.get::<String, _>("role").parse().map_err(|e: String| DomainError::InvalidUserRole(e))?,
+            company_id: row.get("company_id"),
+            email_verified: row.get("email_verified"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
         })
     }
     
     async fn find_by_id(&self, id: Uuid) -> Result<Option<User>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM users WHERE id = $1
             "#,
-            id
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn find_by_keycloak_id(&self, keycloak_id: &str) -> Result<Option<User>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM users WHERE keycloak_id = $1
             "#,
-            keycloak_id
         )
+        .bind(keycloak_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn find_by_email(&self, email: &str) -> Result<Option<User>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM users WHERE email = $1
             "#,
-            email
         )
+        .bind(email)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn find_by_username(&self, username: &str) -> Result<Option<User>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM users WHERE username = $1
             "#,
-            username
         )
+        .bind(username)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn update(&self, user: &User) -> Result<User, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             UPDATE users 
             SET username = $2, email = $3, role = $4, company_id = $5, email_verified = $6, updated_at = $7
             WHERE id = $1
-            RETURNING *
+            RETURNING id, keycloak_id, username, email, role, company_id, email_verified, created_at, updated_at
             "#,
-            user.id,
-            user.username,
-            user.email,
-            user.role.to_string(),
-            user.company_id,
-            user.email_verified,
-            chrono::Utc::now()
         )
+        .bind(user.id)
+        .bind(&user.username)
+        .bind(&user.email)
+        .bind(user.role.to_string())
+        .bind(user.company_id)
+        .bind(user.email_verified)
+        .bind(chrono::Utc::now())
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(User {
-            id: row.id,
-            keycloak_id: row.keycloak_id,
-            username: row.username,
-            email: row.email,
-            role: row.role.parse().unwrap_or(UserRole::User),
-            company_id: row.company_id,
-            email_verified: row.email_verified,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            id: row.get("id"),
+            keycloak_id: row.get("keycloak_id"),
+            username: row.get("username"),
+            email: row.get("email"),
+            role: row.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: row.get("company_id"),
+            email_verified: row.get("email_verified"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
         })
     }
     
     async fn delete(&self, id: Uuid) -> Result<(), DomainError> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             DELETE FROM users WHERE id = $1
             "#,
-            id
         )
+        .bind(id)
         .execute(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
@@ -389,31 +221,31 @@ impl UserRepository for UserRepositoryImpl {
     }
     
     async fn list_by_company(&self, company_id: Uuid) -> Result<Vec<User>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT * FROM users WHERE company_id = $1
             "#,
-            company_id
         )
+        .bind(company_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }).collect())
     }
     
     async fn list_all(&self) -> Result<Vec<User>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT * FROM users
             "#,
@@ -423,15 +255,15 @@ impl UserRepository for UserRepositoryImpl {
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| User {
-            id: r.id,
-            keycloak_id: r.keycloak_id,
-            username: r.username,
-            email: r.email,
-            role: r.role.parse().unwrap_or(UserRole::User),
-            company_id: r.company_id,
-            email_verified: r.email_verified,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            keycloak_id: r.get("keycloak_id"),
+            username: r.get("username"),
+            email: r.get("email"),
+            role: r.get::<String, _>("role").parse().unwrap_or(UserRole::User),
+            company_id: r.get("company_id"),
+            email_verified: r.get("email_verified"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }).collect())
     }
 }
@@ -449,109 +281,109 @@ impl CompanyRepositoryImpl {
 #[async_trait]
 impl CompanyRepository for CompanyRepositoryImpl {
     async fn create(&self, company: &Company) -> Result<Company, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             INSERT INTO companies (id, name, description, created_by, created_at, updated_at)
             VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING *
+            RETURNING id, name, description, created_by, created_at, updated_at
             "#,
-            company.id,
-            company.name,
-            company.description,
-            company.created_by,
-            company.created_at,
-            company.updated_at
         )
+        .bind(company.id)
+        .bind(&company.name)
+        .bind(&company.description)
+        .bind(company.created_by)
+        .bind(company.created_at)
+        .bind(company.updated_at)
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(Company {
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            created_by: row.created_by,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+            created_by: row.get("created_by"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
         })
     }
     
     async fn find_by_id(&self, id: Uuid) -> Result<Option<Company>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM companies WHERE id = $1
             "#,
-            id
         )
+        .bind(id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| Company {
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            created_by: r.created_by,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            name: r.get("name"),
+            description: r.get("description"),
+            created_by: r.get("created_by"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn find_by_name(&self, name: &str) -> Result<Option<Company>, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             SELECT * FROM companies WHERE name = $1
             "#,
-            name
         )
+        .bind(name)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(row.map(|r| Company {
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            created_by: r.created_by,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            name: r.get("name"),
+            description: r.get("description"),
+            created_by: r.get("created_by"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }))
     }
     
     async fn update(&self, company: &Company) -> Result<Company, DomainError> {
-        let row = sqlx::query!(
+        let row = sqlx::query(
             r#"
             UPDATE companies 
             SET name = $2, description = $3, updated_at = $4
             WHERE id = $1
-            RETURNING *
+            RETURNING id, name, description, created_by, created_at, updated_at
             "#,
-            company.id,
-            company.name,
-            company.description,
-            chrono::Utc::now()
         )
+        .bind(company.id)
+        .bind(&company.name)
+        .bind(&company.description)
+        .bind(chrono::Utc::now())
         .fetch_one(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(Company {
-            id: row.id,
-            name: row.name,
-            description: row.description,
-            created_by: row.created_by,
-            created_at: row.created_at,
-            updated_at: row.updated_at,
+            id: row.get("id"),
+            name: row.get("name"),
+            description: row.get("description"),
+            created_by: row.get("created_by"),
+            created_at: row.get("created_at"),
+            updated_at: row.get("updated_at"),
         })
     }
     
     async fn delete(&self, id: Uuid) -> Result<(), DomainError> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             DELETE FROM companies WHERE id = $1
             "#,
-            id
         )
+        .bind(id)
         .execute(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
@@ -560,7 +392,7 @@ impl CompanyRepository for CompanyRepositoryImpl {
     }
     
     async fn list_all(&self) -> Result<Vec<Company>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT * FROM companies
             "#,
@@ -570,35 +402,35 @@ impl CompanyRepository for CompanyRepositoryImpl {
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| Company {
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            created_by: r.created_by,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            name: r.get("name"),
+            description: r.get("description"),
+            created_by: r.get("created_by"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }).collect())
     }
     
     async fn list_by_user(&self, user_id: Uuid) -> Result<Vec<Company>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT c.* FROM companies c
             LEFT JOIN users u ON u.company_id = c.id
             WHERE u.id = $1 OR c.created_by = $1
             "#,
-            user_id
         )
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| Company {
-            id: r.id,
-            name: r.name,
-            description: r.description,
-            created_by: r.created_by,
-            created_at: r.created_at,
-            updated_at: r.updated_at,
+            id: r.get("id"),
+            name: r.get("name"),
+            description: r.get("description"),
+            created_by: r.get("created_by"),
+            created_at: r.get("created_at"),
+            updated_at: r.get("updated_at"),
         }).collect())
     }
 }
@@ -616,21 +448,21 @@ impl AuditLogRepositoryImpl {
 #[async_trait]
 impl AuditLogRepository for AuditLogRepositoryImpl {
     async fn create(&self, audit_log: &AuditLog) -> Result<(), DomainError> {
-        sqlx::query!(
+        sqlx::query(
             r#"
             INSERT INTO audit_logs (id, user_id, action, resource_type, resource_id, details, ip_address, user_agent, created_at)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
             "#,
-            audit_log.id,
-            audit_log.user_id,
-            audit_log.action.to_string(),
-            audit_log.resource_type,
-            audit_log.resource_id,
-            audit_log.details,
-            audit_log.ip_address,
-            audit_log.user_agent,
-            audit_log.created_at
         )
+        .bind(audit_log.id)
+        .bind(audit_log.user_id)
+        .bind(audit_log.action.to_string())
+        .bind(&audit_log.resource_type)
+        .bind(&audit_log.resource_id)
+        .bind(&audit_log.details)
+        .bind(&audit_log.ip_address)
+        .bind(&audit_log.user_agent)
+        .bind(audit_log.created_at)
         .execute(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
@@ -639,77 +471,77 @@ impl AuditLogRepository for AuditLogRepositoryImpl {
     }
     
     async fn find_by_user(&self, user_id: Uuid) -> Result<Vec<AuditLog>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT * FROM audit_logs WHERE user_id = $1 ORDER BY created_at DESC
             "#,
-            user_id
         )
+        .bind(user_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| AuditLog {
-            id: r.id,
-            user_id: r.user_id,
-            action: r.action.parse().unwrap_or(AuditAction::Login),
-            resource_type: r.resource_type,
-            resource_id: r.resource_id,
-            details: r.details,
-            ip_address: r.ip_address,
-            user_agent: r.user_agent,
-            created_at: r.created_at,
+            id: r.get("id"),
+            user_id: r.get("user_id"),
+            action: r.get::<String, _>("action").parse().unwrap_or(AuditAction::Login),
+            resource_type: r.get("resource_type"),
+            resource_id: r.get("resource_id"),
+            details: r.get("details"),
+            ip_address: r.get("ip_address"),
+            user_agent: r.get("user_agent"),
+            created_at: r.get("created_at"),
         }).collect())
     }
     
     async fn find_by_company(&self, company_id: Uuid) -> Result<Vec<AuditLog>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT al.* FROM audit_logs al
             LEFT JOIN users u ON al.user_id = u.id
             WHERE u.company_id = $1
             ORDER BY al.created_at DESC
             "#,
-            company_id
         )
+        .bind(company_id)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| AuditLog {
-            id: r.id,
-            user_id: r.user_id,
-            action: r.action.parse().unwrap_or(AuditAction::Login),
-            resource_type: r.resource_type,
-            resource_id: r.resource_id,
-            details: r.details,
-            ip_address: r.ip_address,
-            user_agent: r.user_agent,
-            created_at: r.created_at,
+            id: r.get("id"),
+            user_id: r.get("user_id"),
+            action: r.get::<String, _>("action").parse().unwrap_or(AuditAction::Login),
+            resource_type: r.get("resource_type"),
+            resource_id: r.get("resource_id"),
+            details: r.get("details"),
+            ip_address: r.get("ip_address"),
+            user_agent: r.get("user_agent"),
+            created_at: r.get("created_at"),
         }).collect())
     }
     
     async fn list_recent(&self, limit: u32) -> Result<Vec<AuditLog>, DomainError> {
-        let rows = sqlx::query!(
+        let rows = sqlx::query(
             r#"
             SELECT * FROM audit_logs ORDER BY created_at DESC LIMIT $1
             "#,
-            limit as i32
         )
+        .bind(limit as i32)
         .fetch_all(&self.pool)
         .await
         .map_err(|e| DomainError::ValidationError(e.to_string()))?;
         
         Ok(rows.into_iter().map(|r| AuditLog {
-            id: r.id,
-            user_id: r.user_id,
-            action: r.action.parse().unwrap_or(AuditAction::Login),
-            resource_type: r.resource_type,
-            resource_id: r.resource_id,
-            details: r.details,
-            ip_address: r.ip_address,
-            user_agent: r.user_agent,
-            created_at: r.created_at,
+            id: r.get("id"),
+            user_id: r.get("user_id"),
+            action: r.get::<String, _>("action").parse().unwrap_or(AuditAction::Login),
+            resource_type: r.get("resource_type"),
+            resource_id: r.get("resource_id"),
+            details: r.get("details"),
+            ip_address: r.get("ip_address"),
+            user_agent: r.get("user_agent"),
+            created_at: r.get("created_at"),
         }).collect())
     }
 }
@@ -970,45 +802,6 @@ impl AuditService {
         );
         
         self.audit_repository.create(&audit_log).await
-    }
-}
-EOF
-
-# Infrastructure tests
-cat > tests/unit/infrastructure_tests.rs << 'EOF'
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::infrastructure::config::Config;
-    use std::env;
-
-    #[test]
-    fn test_config_loading() {
-        // Test that default config can be loaded
-        let config = Config::load();
-        assert!(config.is_ok());
-    }
-
-    #[test]
-    fn test_database_config_connection_string() {
-        let db_config = crate::infrastructure::config::DatabaseConfig {
-            host: "localhost".to_string(),
-            port: 5432,
-            username: "testuser".to_string(),
-            password: "testpass".to_string(),
-            database_name: "testdb".to_string(),
-            max_connections: 10,
-        };
-        
-        let conn_string = db_config.connection_string();
-        assert_eq!(conn_string, "postgres://testuser:testpass@localhost:5432/testdb");
-    }
-
-    #[tokio::test]
-    async fn test_user_repository_operations() {
-        // This would require a test database setup
-        // For now, we'll just verify that the types compile correctly
-        assert!(true);
     }
 }
 EOF
