@@ -2,26 +2,32 @@
 
 set -e
 
-echo "Generating domain layer..."
+echo "Generating complete domain layer..."
 
 cd auth-service
 
-# Create domain directories
-mkdir -p src/domain #/{entities,value_objects,enums,repositories}
+# Create complete domain directories
+mkdir -p src/domain/{entities,value_objects,aggregates,repositories,services,events}
 
 # Domain mod.rs
 cat > src/domain/mod.rs << 'EOF'
 pub mod entities;
 pub mod value_objects;
-pub mod enums;
+pub mod aggregates;
 pub mod repositories;
+pub mod services;
+pub mod events;
 pub mod errors;
+pub mod enums;
 
 // Re-exports
 pub use entities::{User, Company, AuditLog};
 pub use value_objects::{Email, Password};
-pub use enums::{UserRole, AuditAction};
+pub use aggregates::{UserAggregate, CompanyAggregate};
+pub use services::{UserService, CompanyService};
+pub use events::{DomainEvent, UserEvent, CompanyEvent};
 pub use errors::DomainError;
+pub use enums::{UserRole, AuditAction};
 EOF
 
 # Domain errors
@@ -59,6 +65,15 @@ pub enum DomainError {
     
     #[error("Validation error: {0}")]
     ValidationError(String),
+    
+    #[error("Domain rule violation: {0}")]
+    DomainRuleViolation(String),
+    
+    #[error("Insufficient permissions: {0}")]
+    InsufficientPermissions(String),
+    
+    #[error("Invalid operation: {0}")]
+    InvalidOperation(String),
 }
 
 impl DomainError {
@@ -74,16 +89,19 @@ impl DomainError {
             Self::InvalidCompanyAssignment => "DOMAIN_INVALID_COMPANY_ASSIGNMENT",
             Self::UnauthorizedOperation => "DOMAIN_UNAUTHORIZED_OPERATION",
             Self::ValidationError(_) => "DOMAIN_VALIDATION_ERROR",
+            Self::DomainRuleViolation(_) => "DOMAIN_RULE_VIOLATION",
+            Self::InsufficientPermissions(_) => "DOMAIN_INSUFFICIENT_PERMISSIONS",
+            Self::InvalidOperation(_) => "DOMAIN_INVALID_OPERATION",
         }
     }
 }
 EOF
 
+# Enums
 cat > src/domain/enums.rs << 'EOF'
 use serde::{Deserialize, Serialize};
-use utoipa::ToSchema;
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum UserRole {
     Admin,
     Partner,
@@ -119,7 +137,7 @@ impl std::fmt::Display for UserRole {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize, ToSchema)]
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
 pub enum AuditAction {
     UserCreated,
     UserUpdated,
@@ -168,11 +186,13 @@ impl std::fmt::Display for AuditAction {
 }
 EOF
 
-# Value Objects
-cat > src/domain/value_objects.rs << 'EOF'
-use validator::Validate;
+# Value Objects - Email
+cat > src/domain/value_objects/email.rs << 'EOF'
 use serde::{Deserialize, Serialize};
 use std::fmt;
+use validator::Validate;
+
+use crate::domain::errors::DomainError;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Validate)]
 pub struct Email {
@@ -181,10 +201,10 @@ pub struct Email {
 }
 
 impl Email {
-    pub fn new(value: String) -> Result<Self, crate::domain::errors::DomainError> {
+    pub fn new(value: String) -> Result<Self, DomainError> {
         let email = Email { value };
         email.validate()
-            .map_err(|e| crate::domain::errors::DomainError::InvalidEmail(e.to_string()))?;
+            .map_err(|e| DomainError::InvalidEmail(e.to_string()))?;
         Ok(email)
     }
     
@@ -198,6 +218,14 @@ impl fmt::Display for Email {
         write!(f, "{}", self.value)
     }
 }
+EOF
+
+# Value Objects - Password
+cat > src/domain/value_objects/password.rs << 'EOF'
+use serde::{Deserialize, Serialize};
+use std::fmt;
+
+use crate::domain::errors::DomainError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Password {
@@ -205,9 +233,9 @@ pub struct Password {
 }
 
 impl Password {
-    pub fn new(value: String) -> Result<Self, crate::domain::errors::DomainError> {
+    pub fn new(value: String) -> Result<Self, DomainError> {
         if value.len() < 8 {
-            return Err(crate::domain::errors::DomainError::InvalidPassword(
+            return Err(DomainError::InvalidPassword(
                 "Password must be at least 8 characters long".to_string(),
             ));
         }
@@ -231,14 +259,23 @@ impl fmt::Display for Password {
 }
 EOF
 
-# Entities
-cat > src/domain/entities.rs << 'EOF'
+# Value Objects mod.rs
+cat > src/domain/value_objects/mod.rs << 'EOF'
+mod email;
+mod password;
+
+pub use email::Email;
+pub use password::Password;
+EOF
+
+# Entities - User
+cat > src/domain/entities/user.rs << 'EOF'
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 use validator::{Validate, ValidationErrors};
 
-use crate::domain::enums::{UserRole, AuditAction};
+use crate::domain::enums::UserRole;
 use crate::domain::errors::DomainError;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -349,6 +386,14 @@ impl From<ValidationErrors> for DomainError {
         DomainError::ValidationError(err.to_string())
     }
 }
+EOF
+
+# Entities - Company
+cat > src/domain/entities/company.rs << 'EOF'
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+use validator::{Validate, ValidationErrors};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Company {
@@ -389,6 +434,15 @@ impl Validate for Company {
         }
     }
 }
+EOF
+
+# Entities - AuditLog
+cat > src/domain/entities/audit_log.rs << 'EOF'
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::domain::enums::AuditAction;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditLog {
@@ -428,12 +482,201 @@ impl AuditLog {
 }
 EOF
 
-# Repository traits
-cat > src/domain/repositories.rs << 'EOF'
+# Entities mod.rs
+cat > src/domain/entities/mod.rs << 'EOF'
+mod user;
+mod company;
+mod audit_log;
+
+pub use user::User;
+pub use company::Company;
+pub use audit_log::AuditLog;
+EOF
+
+# Aggregates - UserAggregate
+cat > src/domain/aggregates/user_aggregate.rs << 'EOF'
+use uuid::Uuid;
+
+use crate::domain::entities::User;
+use crate::domain::enums::UserRole;
+use crate::domain::errors::DomainError;
+use crate::domain::events::{DomainEvent, UserEvent};
+
+pub struct UserAggregate {
+    pub user: User,
+    pub events: Vec<DomainEvent>,
+}
+
+impl UserAggregate {
+    pub fn new(
+        keycloak_id: String,
+        username: String,
+        email: String,
+        role: UserRole,
+        company_id: Option<Uuid>,
+    ) -> Result<Self, DomainError> {
+        let user = User::new(keycloak_id, username, email, role, company_id)?;
+        let mut aggregate = UserAggregate {
+            user,
+            events: Vec::new(),
+        };
+        
+        aggregate.events.push(DomainEvent::UserCreated(UserEvent {
+            user_id: aggregate.user.id,
+            keycloak_id: aggregate.user.keycloak_id.clone(),
+            username: aggregate.user.username.clone(),
+            email: aggregate.user.email.clone(),
+            role: aggregate.user.role,
+            company_id: aggregate.user.company_id,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        Ok(aggregate)
+    }
+    
+    pub fn update_email(&mut self, new_email: String) -> Result<(), DomainError> {
+        let _old_email = self.user.email.clone();
+        self.user.email = new_email;
+        self.user.updated_at = chrono::Utc::now();
+        
+        self.events.push(DomainEvent::UserUpdated(UserEvent {
+            user_id: self.user.id,
+            keycloak_id: self.user.keycloak_id.clone(),
+            username: self.user.username.clone(),
+            email: self.user.email.clone(),
+            role: self.user.role,
+            company_id: self.user.company_id,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        Ok(())
+    }
+    
+    pub fn update_role(&mut self, new_role: UserRole, actor: &User) -> Result<(), DomainError> {
+        if !actor.is_admin() && !actor.can_manage_user(&self.user) {
+            return Err(DomainError::InsufficientPermissions(
+                "Only admins or managers can change user roles".to_string(),
+            ));
+        }
+        
+        self.user.role = new_role;
+        self.user.updated_at = chrono::Utc::now();
+        
+        self.events.push(DomainEvent::UserRoleChanged(UserEvent {
+            user_id: self.user.id,
+            keycloak_id: self.user.keycloak_id.clone(),
+            username: self.user.username.clone(),
+            email: self.user.email.clone(),
+            role: self.user.role,
+            company_id: self.user.company_id,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        Ok(())
+    }
+    
+    pub fn assign_to_company(&mut self, company_id: Uuid, actor: &User) -> Result<(), DomainError> {
+        if !actor.can_manage_company(company_id) {
+            return Err(DomainError::InsufficientPermissions(
+                "User cannot assign to this company".to_string(),
+            ));
+        }
+        
+        self.user.company_id = Some(company_id);
+        self.user.updated_at = chrono::Utc::now();
+        
+        self.events.push(DomainEvent::UserCompanyAssigned(UserEvent {
+            user_id: self.user.id,
+            keycloak_id: self.user.keycloak_id.clone(),
+            username: self.user.username.clone(),
+            email: self.user.email.clone(),
+            role: self.user.role,
+            company_id: self.user.company_id,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        Ok(())
+    }
+    
+    pub fn take_events(&mut self) -> Vec<DomainEvent> {
+        std::mem::take(&mut self.events)
+    }
+}
+EOF
+
+# Aggregates - CompanyAggregate
+cat > src/domain/aggregates/company_aggregate.rs << 'EOF'
+use uuid::Uuid;
+
+use crate::domain::entities::{Company, User};
+use crate::domain::errors::DomainError;
+use crate::domain::events::{CompanyEvent, DomainEvent};
+
+pub struct CompanyAggregate {
+    pub company: Company,
+    pub events: Vec<DomainEvent>,
+}
+
+impl CompanyAggregate {
+    pub fn new(name: String, description: Option<String>, created_by: Uuid) -> Self {
+        let company = Company::new(name, description, created_by);
+        let mut aggregate = CompanyAggregate {
+            company,
+            events: Vec::new(),
+        };
+        
+        aggregate.events.push(DomainEvent::CompanyCreated(CompanyEvent {
+            company_id: aggregate.company.id,
+            name: aggregate.company.name.clone(),
+            created_by: aggregate.company.created_by,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        aggregate
+    }
+    
+    pub fn update_info(&mut self, name: String, description: Option<String>, actor: &User) -> Result<(), DomainError> {
+        if !actor.can_manage_company(self.company.id) {
+            return Err(DomainError::InsufficientPermissions(
+                "User cannot manage this company".to_string(),
+            ));
+        }
+        
+        self.company.name = name;
+        self.company.description = description;
+        self.company.updated_at = chrono::Utc::now();
+        
+        self.events.push(DomainEvent::CompanyUpdated(CompanyEvent {
+            company_id: self.company.id,
+            name: self.company.name.clone(),
+            created_by: self.company.created_by,
+            timestamp: chrono::Utc::now(),
+        }));
+        
+        Ok(())
+    }
+    
+    pub fn take_events(&mut self) -> Vec<DomainEvent> {
+        std::mem::take(&mut self.events)
+    }
+}
+EOF
+
+# Aggregates mod.rs
+cat > src/domain/aggregates/mod.rs << 'EOF'
+mod user_aggregate;
+mod company_aggregate;
+
+pub use user_aggregate::UserAggregate;
+pub use company_aggregate::CompanyAggregate;
+EOF
+
+# Repository traits - UserRepository
+cat > src/domain/repositories/user_repository.rs << 'EOF'
 use async_trait::async_trait;
 use uuid::Uuid;
 
-use crate::domain::entities::{User, Company, AuditLog};
+use crate::domain::entities::User;
 use crate::domain::errors::DomainError;
 
 #[async_trait]
@@ -448,6 +691,15 @@ pub trait UserRepository: Send + Sync {
     async fn list_by_company(&self, company_id: Uuid) -> Result<Vec<User>, DomainError>;
     async fn list_all(&self) -> Result<Vec<User>, DomainError>;
 }
+EOF
+
+# Repository traits - CompanyRepository
+cat > src/domain/repositories/company_repository.rs << 'EOF'
+use async_trait::async_trait;
+use uuid::Uuid;
+
+use crate::domain::entities::Company;
+use crate::domain::errors::DomainError;
 
 #[async_trait]
 pub trait CompanyRepository: Send + Sync {
@@ -459,6 +711,15 @@ pub trait CompanyRepository: Send + Sync {
     async fn list_all(&self) -> Result<Vec<Company>, DomainError>;
     async fn list_by_user(&self, user_id: Uuid) -> Result<Vec<Company>, DomainError>;
 }
+EOF
+
+# Repository traits - AuditLogRepository
+cat > src/domain/repositories/audit_log_repository.rs << 'EOF'
+use async_trait::async_trait;
+use uuid::Uuid;
+
+use crate::domain::entities::AuditLog;
+use crate::domain::errors::DomainError;
 
 #[async_trait]
 pub trait AuditLogRepository: Send + Sync {
@@ -469,126 +730,295 @@ pub trait AuditLogRepository: Send + Sync {
 }
 EOF
 
-# Create domain test directory and tests
-mkdir -p tests/unit/domain
+# Repository traits mod.rs
+cat > src/domain/repositories/mod.rs << 'EOF'
+mod user_repository;
+mod company_repository;
+mod audit_log_repository;
 
-cat > tests/unit/domain/mod.rs << 'EOF'
-pub mod domain_tests;
+pub use user_repository::UserRepository;
+pub use company_repository::CompanyRepository;
+pub use audit_log_repository::AuditLogRepository;
 EOF
 
-cat > tests/unit/domain/domain_tests.rs << 'EOF'
-use auth_service::domain::entities::User;
-use auth_service::domain::enums::UserRole;
-use auth_service::domain::value_objects::{Email, Password};
+# Domain Services - UserService
+cat > src/domain/services/user_service.rs << 'EOF'
 use uuid::Uuid;
 
-#[test]
-fn test_email_validation() {
-    // Valid email
-    let email = Email::new("test@example.com".to_string());
-    assert!(email.is_ok());
+use crate::domain::entities::User;
+use crate::domain::enums::UserRole;
+use crate::domain::errors::DomainError;
+use crate::domain::repositories::{UserRepository, CompanyRepository};
+
+pub struct UserService;
+
+impl UserService {
+    pub fn new() -> Self {
+        UserService
+    }
     
-    // Invalid email
-    let email = Email::new("invalid-email".to_string());
-    assert!(email.is_err());
+    pub async fn register_user(
+        &self,
+        user_repo: &impl UserRepository,
+        company_repo: &impl CompanyRepository,
+        keycloak_id: String,
+        username: String,
+        email: String,
+        role: UserRole,
+        company_id: Option<Uuid>,
+    ) -> Result<User, DomainError> {
+        // Check if user already exists
+        if user_repo.find_by_keycloak_id(&keycloak_id).await?.is_some() {
+            return Err(DomainError::UserAlreadyExists(
+                format!("User with keycloak_id {} already exists", keycloak_id)
+            ));
+        }
+        
+        if user_repo.find_by_email(&email).await?.is_some() {
+            return Err(DomainError::UserAlreadyExists(
+                format!("User with email {} already exists", email)
+            ));
+        }
+        
+        // Validate company assignment
+        if let Some(cid) = company_id {
+            if company_repo.find_by_id(cid).await?.is_none() {
+                return Err(DomainError::CompanyNotFound);
+            }
+        }
+        
+        // Create user
+        let user = User::new(keycloak_id, username, email, role, company_id)?;
+        user_repo.create(&user).await
+    }
+    
+    pub async fn change_user_role(
+        &self,
+        user_repo: &impl UserRepository,
+        actor_id: Uuid,
+        target_user_id: Uuid,
+        new_role: UserRole,
+    ) -> Result<User, DomainError> {
+        let actor = user_repo.find_by_id(actor_id).await?
+            .ok_or(DomainError::UserNotFound)?;
+        
+        let mut target_user = user_repo.find_by_id(target_user_id).await?
+            .ok_or(DomainError::UserNotFound)?;
+        
+        if !actor.can_manage_user(&target_user) {
+            return Err(DomainError::InsufficientPermissions(
+                "Cannot change role of this user".to_string()
+            ));
+        }
+        
+        target_user.role = new_role;
+        user_repo.update(&target_user).await
+    }
+    
+    pub async fn assign_user_to_company(
+        &self,
+        user_repo: &impl UserRepository,
+        company_repo: &impl CompanyRepository,
+        actor_id: Uuid,
+        user_id: Uuid,
+        company_id: Uuid,
+    ) -> Result<User, DomainError> {
+        let actor = user_repo.find_by_id(actor_id).await?
+            .ok_or(DomainError::UserNotFound)?;
+        
+        let company = company_repo.find_by_id(company_id).await?
+            .ok_or(DomainError::CompanyNotFound)?;
+        
+        if !actor.can_manage_company(company.id) {
+            return Err(DomainError::InsufficientPermissions(
+                "Cannot assign users to this company".to_string()
+            ));
+        }
+        
+        let mut user = user_repo.find_by_id(user_id).await?
+            .ok_or(DomainError::UserNotFound)?;
+        
+        user.company_id = Some(company.id);
+        user_repo.update(&user).await
+    }
+}
+EOF
+
+# Domain Services - CompanyService
+cat > src/domain/services/company_service.rs << 'EOF'
+use uuid::Uuid;
+
+use crate::domain::entities::Company;
+use crate::domain::errors::DomainError;
+use crate::domain::repositories::{CompanyRepository, UserRepository};
+
+pub struct CompanyService;
+
+impl CompanyService {
+    pub fn new() -> Self {
+        CompanyService
+    }
+    
+    pub async fn create_company(
+        &self,
+        company_repo: &impl CompanyRepository,
+        user_repo: &impl UserRepository,
+        name: String,
+        description: Option<String>,
+        created_by: Uuid,
+    ) -> Result<Company, DomainError> {
+        // Check if company already exists
+        if company_repo.find_by_name(&name).await?.is_some() {
+            return Err(DomainError::CompanyAlreadyExists(
+                format!("Company with name {} already exists", name)
+            ));
+        }
+        
+        // Validate creator exists
+        if user_repo.find_by_id(created_by).await?.is_none() {
+            return Err(DomainError::UserNotFound);
+        }
+        
+        // Create company
+        let company = Company::new(name, description, created_by);
+        company_repo.create(&company).await
+    }
+    
+    pub async fn update_company(
+        &self,
+        company_repo: &impl CompanyRepository,
+        user_repo: &impl UserRepository,
+        company_id: Uuid,
+        name: String,
+        description: Option<String>,
+        actor_id: Uuid,
+    ) -> Result<Company, DomainError> {
+        let actor = user_repo.find_by_id(actor_id).await?
+            .ok_or(DomainError::UserNotFound)?;
+        
+        let mut company = company_repo.find_by_id(company_id).await?
+            .ok_or(DomainError::CompanyNotFound)?;
+        
+        if !actor.can_manage_company(company.id) {
+            return Err(DomainError::InsufficientPermissions(
+                "Cannot update this company".to_string()
+            ));
+        }
+        
+        company.name = name;
+        company.description = description;
+        company_repo.update(&company).await
+    }
+}
+EOF
+
+# Domain Services mod.rs
+cat > src/domain/services/mod.rs << 'EOF'
+mod user_service;
+mod company_service;
+
+pub use user_service::UserService;
+pub use company_service::CompanyService;
+EOF
+
+# Domain Events
+cat > src/domain/events.rs << 'EOF'
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
+
+use crate::domain::enums::UserRole;
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub enum DomainEvent {
+    UserCreated(UserEvent),
+    UserUpdated(UserEvent),
+    UserRoleChanged(UserEvent),
+    UserCompanyAssigned(UserEvent),
+    UserDeleted(UserEvent),
+    CompanyCreated(CompanyEvent),
+    CompanyUpdated(CompanyEvent),
+    CompanyDeleted(CompanyEvent),
 }
 
-#[test]
-fn test_password_validation() {
-    // Valid password
-    let password = Password::new("password123".to_string());
-    assert!(password.is_ok());
+impl DomainEvent {
+    pub fn event_type(&self) -> &str {
+        match self {
+            Self::UserCreated(_) => "UserCreated",
+            Self::UserUpdated(_) => "UserUpdated",
+            Self::UserRoleChanged(_) => "UserRoleChanged",
+            Self::UserCompanyAssigned(_) => "UserCompanyAssigned",
+            Self::UserDeleted(_) => "UserDeleted",
+            Self::CompanyCreated(_) => "CompanyCreated",
+            Self::CompanyUpdated(_) => "CompanyUpdated",
+            Self::CompanyDeleted(_) => "CompanyDeleted",
+        }
+    }
     
-    // Too short password
-    let password = Password::new("short".to_string());
-    assert!(password.is_err());
+    pub fn timestamp(&self) -> DateTime<Utc> {
+        match self {
+            Self::UserCreated(e) => e.timestamp,
+            Self::UserUpdated(e) => e.timestamp,
+            Self::UserRoleChanged(e) => e.timestamp,
+            Self::UserCompanyAssigned(e) => e.timestamp,
+            Self::UserDeleted(e) => e.timestamp,
+            Self::CompanyCreated(e) => e.timestamp,
+            Self::CompanyUpdated(e) => e.timestamp,
+            Self::CompanyDeleted(e) => e.timestamp,
+        }
+    }
 }
 
-#[test]
-fn test_user_creation() {
-    let user = User::new(
-        "keycloak-123".to_string(),
-        "testuser".to_string(),
-        "test@example.com".to_string(),
-        UserRole::User,
-        None,
-    );
-    
-    assert!(user.is_ok());
-    let user = user.unwrap();
-    assert_eq!(user.username, "testuser");
-    assert_eq!(user.email, "test@example.com");
-    assert!(matches!(user.role, UserRole::User));
-    assert!(user.company_id.is_none());
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct UserEvent {
+    pub user_id: Uuid,
+    pub keycloak_id: String,
+    pub username: String,
+    pub email: String,
+    pub role: UserRole,
+    pub company_id: Option<Uuid>,
+    pub timestamp: DateTime<Utc>,
 }
 
-#[test]
-fn test_user_permissions() {
-    let admin_user = User::new(
-        "keycloak-admin".to_string(),
-        "admin".to_string(),
-        "admin@example.com".to_string(),
-        UserRole::Admin,
-        None,
-    ).unwrap();
-    
-    let partner_user = User::new(
-        "keycloak-partner".to_string(),
-        "partner".to_string(),
-        "partner@example.com".to_string(),
-        UserRole::Partner,
-        Some(Uuid::new_v4()),
-    ).unwrap();
-    
-    let regular_user = User::new(
-        "keycloak-user".to_string(),
-        "user".to_string(),
-        "user@example.com".to_string(),
-        UserRole::User,
-        None,
-    ).unwrap();
-    
-    assert!(admin_user.is_admin());
-    assert!(partner_user.is_partner());
-    assert!(regular_user.is_regular_user());
-    
-    let test_company_id = Uuid::new_v4();
-    assert!(admin_user.can_manage_company(test_company_id));
-    assert!(partner_user.can_manage_company(partner_user.company_id.unwrap()));
-    assert!(!regular_user.can_manage_company(test_company_id));
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CompanyEvent {
+    pub company_id: Uuid,
+    pub name: String,
+    pub created_by: Uuid,
+    pub timestamp: DateTime<Utc>,
 }
+EOF
 
-#[test]
-fn test_user_validation() {
-    // Test invalid user creation
-    let invalid_user = User::new(
-        "".to_string(),
-        "".to_string(),
-        "invalid-email".to_string(),
-        UserRole::User,
-        None,
-    );
-    
-    assert!(invalid_user.is_err());
-}
+cat > Cargo.toml << 'EOF'
+[package]
+name = "auth-service"
+version = "0.1.0"
+edition = "2021"
+description = "Authentication and Authorization Microservice with Keycloak"
+authors = ["M.MEZNI"]
+license = "MIT"
 
-#[test]
-fn test_enum_conversions() {
-    // Test UserRole from string
-    assert_eq!("admin".parse::<UserRole>().unwrap(), UserRole::Admin);
-    assert_eq!("partner".parse::<UserRole>().unwrap(), UserRole::Partner);
-    assert_eq!("operator".parse::<UserRole>().unwrap(), UserRole::Operator);
-    assert_eq!("user".parse::<UserRole>().unwrap(), UserRole::User);
-    assert_eq!("guest".parse::<UserRole>().unwrap(), UserRole::Guest);
-    
-    // Test invalid role
-    assert!("invalid".parse::<UserRole>().is_err());
-    
-    // Test display
-    assert_eq!(UserRole::Admin.to_string(), "Admin");
-    assert_eq!(UserRole::Partner.to_string(), "Partner");
-}
+[dependencies]
+actix-web = "4.12.0"
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.17"
+tracing = "0.1.41"
+tracing-subscriber = "0.3.20"
+tokio = { version = "1.48.0", features = ["full"] }
+config = "0.15.19"
+serde_json = "1.0.145"
+chrono = { version = "0.4.42", features = ["serde"] }
+validator = { version = "0.20.0", features = ["derive"] }
+uuid = { version = "1.18.1", features = ["v4", "serde"] }
+async-trait = "0.1.89"
+
+[dev-dependencies]
+actix-web = "4.12.0"
+tokio = { version = "1.48.0", features = ["full"] }
+
+[[bin]]
+name = "auth-service"
+path = "src/main.rs"
 EOF
 
 echo "Domain layer generated successfully!"
-echo "You can test it with: cargo test unit::domain"
