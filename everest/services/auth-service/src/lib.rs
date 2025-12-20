@@ -1,26 +1,19 @@
-pub mod core {
-    pub mod config;
-    pub mod constants;
-    pub mod database;
-    pub mod errors;
-    pub mod id_generator;
-    pub mod logging;
-    pub mod state;
-}
+pub mod application;
+pub mod core;
+pub mod interfaces;
 
+use crate::core::config::Config;
 use crate::core::database::create_pool;
 use crate::core::state::AppState;
-use actix_web::{App, HttpResponse, HttpServer, Responder, middleware::Logger, web};
+use crate::interfaces::http::configure_routes;
+use crate::interfaces::swagger::configure_swagger;
 
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("OK")
-}
+use actix_web::{App, HttpServer, middleware::Logger, web};
 
 pub async fn run() -> anyhow::Result<()> {
-    let config = core::config::Config::from_env();
+    let config = Config::from_env();
     let pool = create_pool(&config.database_url).await?;
 
-    // Wrap state in web::Data (Actix's way of sharing state)
     let app_state = web::Data::new(AppState::new(config.clone(), pool));
     let server_addr = config.server_addr.clone();
 
@@ -28,10 +21,12 @@ pub async fn run() -> anyhow::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::default()) // Logging middleware
-            .app_data(app_state.clone()) // Inject state
-            .route("/health", web::get().to(health_check))
-        // .configure(routes::init) // You can add your routes here
+            .wrap(Logger::default())
+            .app_data(app_state.clone())
+            // Register API routes
+            .configure(configure_routes)
+            // Register Swagger UI
+            .configure(configure_swagger)
     })
     .bind(&server_addr)?
     .run()
