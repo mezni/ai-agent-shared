@@ -4,14 +4,18 @@ use crate::application::dtos::registration::{
 };
 use crate::application::registration_service::RegistrationService;
 use crate::core::errors::AppError;
+use crate::domain::enums::Source;
 use crate::domain::services::RegistrationService as RegistrationServiceTrait;
 use actix_web::{HttpRequest, HttpResponse, Responder, web};
 use validator::Validate;
 
 pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.route("/register", web::post().to(register_user))
-        .route("/verify", web::post().to(verify_registration))
-        .route("/verify/resend", web::post().to(resend_verification));
+    cfg.service(
+        web::scope("/api/v1")
+            .route("/register", web::post().to(register_user))
+            .route("/verify", web::post().to(verify_registration))
+            .route("/verify/resend", web::post().to(resend_verification)),
+    );
 }
 
 #[utoipa::path(
@@ -37,15 +41,16 @@ pub async fn register_user(
         .connection_info()
         .realip_remote_addr()
         .map(|s| s.to_string());
+
     let user_agent = req
         .headers()
         .get("user-agent")
         .and_then(|h| h.to_str().ok())
         .map(|s| s.to_string());
 
+    // Use the inner Arc directly
     let svc = RegistrationService::new(state.into_inner());
 
-    // Added "web" as default source since it's missing from your RegisterRequest DTO
     let registration = svc
         .register(
             body.email.clone(),
@@ -54,7 +59,7 @@ pub async fn register_user(
             body.first_name.clone(),
             body.last_name.clone(),
             body.phone.clone(),
-            "web".to_string(), // Default source
+            Source::Web, // Pass the enum directly
             ip_address,
             user_agent,
         )
@@ -81,17 +86,22 @@ pub async fn verify_registration(
     state: web::Data<AppState>,
     body: web::Json<VerifyRequest>,
 ) -> Result<impl Responder, AppError> {
+    // 1. Validate the request body (Ensure email and token are present)
     body.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
     let svc = RegistrationService::new(state.into_inner());
-    let user = svc.verify(body.token.clone()).await?;
 
+    // 2. Pass both email and token to the service
+    // This matches the trait: async fn verify(&self, email: String, token: String)
+    let user = svc.verify(body.email.clone(), body.token.clone()).await?;
+
+    // 3. Return the response
     Ok(HttpResponse::Ok().json(VerifyResponse {
         user_id: user.user_id,
-        email: user.email,
         username: user.username,
-        message: "Email verified successfully.".into(),
+        email: user.email,
+        message: "Email verified successfully. Your account is now active.".into(),
     }))
 }
 
@@ -116,6 +126,6 @@ pub async fn resend_verification(
     svc.resend_verification(body.email.clone()).await?;
 
     Ok(HttpResponse::Ok().json(ResendResponse {
-        message: "Verification email has been resent.".into(),
+        message: "A new verification email has been sent.".into(),
     }))
 }
