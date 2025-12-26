@@ -1,3 +1,4 @@
+use crate::AppState;
 use crate::core::constants::VERIFICATION_TOKEN_EXPIRY_HOURS;
 use crate::core::errors::{AppError, AppResult};
 use crate::domain::entities::{User, UserRegistration};
@@ -10,22 +11,12 @@ use chrono::Utc;
 use std::sync::Arc;
 
 pub struct RegistrationService {
-    user_repo: Arc<dyn UserRepository>,
-    registration_repo: Arc<dyn RegistrationRepository>,
-    keycloak: Arc<dyn KeycloakClient>,
+    state: Arc<AppState>,
 }
 
 impl RegistrationService {
-    pub fn new(
-        user_repo: Arc<dyn UserRepository>,
-        registration_repo: Arc<dyn RegistrationRepository>,
-        keycloak: Arc<dyn KeycloakClient>,
-    ) -> Self {
-        Self {
-            user_repo,
-            registration_repo,
-            keycloak,
-        }
+    pub fn new(state: Arc<AppState>) -> Self {
+        Self { state }
     }
 }
 
@@ -43,29 +34,28 @@ impl RegistrationServiceTrait for RegistrationService {
         ip_address: Option<String>,
         user_agent: Option<String>,
     ) -> AppResult<UserRegistration> {
-        // Check if user already exists
-        if self.user_repo.find_by_email(&email).await?.is_some() {
+        // Access via self.state
+        if self.state.user_repo.find_by_email(&email).await?.is_some() {
             return Err(AppError::Conflict("Email already registered".into()));
         }
 
-        // Create user in Keycloak (disabled initially)
+        // Create user in Keycloak
         let keycloak_id = self
-            .keycloak
+            .state
+            .keycloak_client
             .create_user(&email, &username, &password, None)
             .await
             .map_err(|e| AppError::Keycloak(e.to_string()))?;
 
-        // Disable the user until email is verified
-        self.keycloak
+        self.state
+            .keycloak_client
             .disable_user(&keycloak_id)
             .await
             .map_err(|e| AppError::Keycloak(e.to_string()))?;
 
-        // Generate verification token
         let verification_token = nanoid::nanoid!(32);
         let expires_at = Utc::now() + chrono::Duration::hours(VERIFICATION_TOKEN_EXPIRY_HOURS);
 
-        // Create registration record
         let registration = UserRegistration {
             registration_id: nanoid::nanoid!(32),
             email: email.clone(),
@@ -90,10 +80,10 @@ impl RegistrationServiceTrait for RegistrationService {
             },
         };
 
-        let created = self.registration_repo.create(&registration).await?;
+        let created = self.state.registration_repo.create(&registration).await?;
 
-        // Send verification email
-        self.keycloak
+        self.state
+            .keycloak_client
             .send_verification_email(&created.keycloak_id)
             .await
             .map_err(|e| AppError::Keycloak(e.to_string()))?;
@@ -102,32 +92,29 @@ impl RegistrationServiceTrait for RegistrationService {
     }
 
     async fn verify(&self, token: String) -> AppResult<User> {
-        // Find registration by token
         let mut registration = self
+            .state
             .registration_repo
             .find_by_token(&token)
             .await?
             .ok_or_else(|| AppError::NotFound("Invalid verification token".into()))?;
 
-        // Check if already verified
         if registration.status == RegistrationStatus::Verified {
             return Err(AppError::BadRequest("Already verified".into()));
         }
 
-        // Check if expired
         if Utc::now() > registration.expires_at {
             registration.status = RegistrationStatus::Expired;
-            self.registration_repo.update(&registration).await?;
+            self.state.registration_repo.update(&registration).await?;
             return Err(AppError::BadRequest("Verification link expired".into()));
         }
 
-        // Enable user in Keycloak
-        self.keycloak
+        self.state
+            .keycloak_client
             .enable_user(&registration.keycloak_id)
             .await
             .map_err(|e| AppError::Keycloak(e.to_string()))?;
 
-        // Create user in database
         let user = User {
             user_id: nanoid::nanoid!(32),
             keycloak_id: registration.keycloak_id.clone(),
@@ -151,19 +138,19 @@ impl RegistrationServiceTrait for RegistrationService {
             updated_by: None,
         };
 
-        let created_user = self.user_repo.create(&user).await?;
+        let created_user = self.state.user_repo.create(&user).await?;
 
-        // Update registration
         registration.status = RegistrationStatus::Verified;
         registration.user_id = Some(created_user.user_id.clone());
         registration.verified_at = Some(Utc::now());
-        self.registration_repo.update(&registration).await?;
+        self.state.registration_repo.update(&registration).await?;
 
         Ok(created_user)
     }
 
     async fn resend_verification(&self, email: String) -> AppResult<()> {
         let mut registration = self
+            .state
             .registration_repo
             .find_by_email(&email)
             .await?
@@ -179,15 +166,14 @@ impl RegistrationServiceTrait for RegistrationService {
             ));
         }
 
-        // Extend expiry
         registration.expires_at =
             Utc::now() + chrono::Duration::hours(VERIFICATION_TOKEN_EXPIRY_HOURS);
         registration.resend_count += 1;
 
-        self.registration_repo.update(&registration).await?;
+        self.state.registration_repo.update(&registration).await?;
 
-        // Resend email
-        self.keycloak
+        self.state
+            .keycloak_client
             .send_verification_email(&registration.keycloak_id)
             .await
             .map_err(|e| AppError::Keycloak(e.to_string()))?;
