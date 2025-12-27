@@ -1,28 +1,16 @@
-use crate::AppState;
-use crate::application::admin_service::AdminService;
 use crate::application::dtos::admin::*;
 use crate::core::errors::AppError;
 use crate::domain::services::{AdminService as AdminServiceTrait, CreateUserData, UpdateUserData};
-use actix_web::{HttpResponse, Responder, web};
+use actix_web::{HttpResponse, Responder, delete, get, post, put, web};
 use serde::Deserialize;
+use std::sync::Arc;
 use utoipa::IntoParams;
 use validator::Validate;
 
-#[derive(Deserialize, IntoParams)]
+#[derive(Debug, Deserialize, IntoParams)]
 pub struct PaginationQuery {
     pub limit: Option<i64>,
     pub offset: Option<i64>,
-}
-
-pub fn configure(cfg: &mut web::ServiceConfig) {
-    cfg.service(
-        web::scope("/admin/users")
-            .route("", web::get().to(list_users))
-            .route("", web::post().to(create_user))
-            .route("/{id}", web::get().to(get_user))
-            .route("/{id}", web::put().to(update_user))
-            .route("/{id}", web::delete().to(delete_user)),
-    );
 }
 
 #[utoipa::path(
@@ -30,24 +18,25 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     path = "/api/v1/admin/users",
     params(PaginationQuery),
     responses(
-        (status = 200, description = "Users retrieved", body = UserListResponse),
-        (status = 401, description = "Unauthorized")
+        (status = 200, description = "List of users", body = UserListResponse),
+        (status = 403, description = "Forbidden")
     ),
     tag = "Admin",
     security(("bearer_auth" = []))
 )]
+#[get("")]
 pub async fn list_users(
-    state: web::Data<AppState>,
+    service: web::Data<Arc<dyn AdminServiceTrait>>,
     query: web::Query<PaginationQuery>,
 ) -> Result<impl Responder, AppError> {
     let limit = query.limit.unwrap_or(20);
     let offset = query.offset.unwrap_or(0);
 
-    let svc = AdminService::new(state.into_inner());
-    let users = svc.list_users(limit, offset).await?;
+    let users = service.list_users(limit, offset).await?;
+    let total = users.len();
 
     Ok(HttpResponse::Ok().json(UserListResponse {
-        total: users.len(),
+        total,
         users: users.into_iter().map(UserResponse::from).collect(),
         limit,
         offset,
@@ -57,7 +46,9 @@ pub async fn list_users(
 #[utoipa::path(
     get,
     path = "/api/v1/admin/users/{id}",
-    params(("id" = String, Path, description = "User UUID")),
+    params(
+        ("id" = String, Path, description = "User ID")
+    ),
     responses(
         (status = 200, description = "User found", body = UserResponse),
         (status = 404, description = "User not found")
@@ -65,13 +56,12 @@ pub async fn list_users(
     tag = "Admin",
     security(("bearer_auth" = []))
 )]
+#[get("/{id}")]
 pub async fn get_user(
-    state: web::Data<AppState>,
+    service: web::Data<Arc<dyn AdminServiceTrait>>,
     path: web::Path<String>,
 ) -> Result<impl Responder, AppError> {
-    let svc = AdminService::new(state.into_inner());
-    let user = svc.get_user(&path.into_inner()).await?;
-
+    let user = service.get_user(&path.into_inner()).await?;
     Ok(HttpResponse::Ok().json(UserResponse::from(user)))
 }
 
@@ -81,19 +71,20 @@ pub async fn get_user(
     request_body = CreateUserRequest,
     responses(
         (status = 201, description = "User created", body = UserResponse),
-        (status = 409, description = "Conflict - User exists")
+        (status = 400, description = "Validation error"),
+        (status = 409, description = "User already exists")
     ),
     tag = "Admin",
     security(("bearer_auth" = []))
 )]
+#[post("")]
 pub async fn create_user(
-    state: web::Data<AppState>,
+    service: web::Data<Arc<dyn AdminServiceTrait>>,
     body: web::Json<CreateUserRequest>,
 ) -> Result<impl Responder, AppError> {
     body.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
-    let svc = AdminService::new(state.into_inner());
     let data = CreateUserData {
         email: body.email.clone(),
         username: body.username.clone(),
@@ -104,31 +95,34 @@ pub async fn create_user(
         role: body.role.clone(),
     };
 
-    let user = svc.create_user(data).await?;
+    let user = service.create_user(data).await?;
     Ok(HttpResponse::Created().json(UserResponse::from(user)))
 }
 
 #[utoipa::path(
     put,
     path = "/api/v1/admin/users/{id}",
-    params(("id" = String, Path, description = "User UUID")),
+    params(
+        ("id" = String, Path, description = "User ID")
+    ),
     request_body = UpdateUserRequest,
     responses(
         (status = 200, description = "User updated", body = UserResponse),
+        (status = 400, description = "Validation error"),
         (status = 404, description = "User not found")
     ),
     tag = "Admin",
     security(("bearer_auth" = []))
 )]
+#[put("/{id}")]
 pub async fn update_user(
-    state: web::Data<AppState>,
+    service: web::Data<Arc<dyn AdminServiceTrait>>,
     path: web::Path<String>,
     body: web::Json<UpdateUserRequest>,
 ) -> Result<impl Responder, AppError> {
     body.validate()
         .map_err(|e| AppError::ValidationError(e.to_string()))?;
 
-    let svc = AdminService::new(state.into_inner());
     let data = UpdateUserData {
         email: body.email.clone(),
         username: body.username.clone(),
@@ -139,28 +133,29 @@ pub async fn update_user(
         is_active: body.is_active,
     };
 
-    let user = svc.update_user(&path.into_inner(), data).await?;
+    let user = service.update_user(&path.into_inner(), data).await?;
     Ok(HttpResponse::Ok().json(UserResponse::from(user)))
 }
 
 #[utoipa::path(
     delete,
     path = "/api/v1/admin/users/{id}",
-    params(("id" = String, Path, description = "User UUID")),
+    params(
+        ("id" = String, Path, description = "User ID")
+    ),
     responses(
-        (status = 200, description = "User deleted"),
+        (status = 200, description = "User deleted successfully"),
         (status = 404, description = "User not found")
     ),
     tag = "Admin",
     security(("bearer_auth" = []))
 )]
+#[delete("/{id}")]
 pub async fn delete_user(
-    state: web::Data<AppState>,
+    service: web::Data<Arc<dyn AdminServiceTrait>>,
     path: web::Path<String>,
 ) -> Result<impl Responder, AppError> {
-    let svc = AdminService::new(state.into_inner());
-    svc.delete_user(&path.into_inner()).await?;
-
+    service.delete_user(&path.into_inner()).await?;
     Ok(HttpResponse::Ok().json(serde_json::json!({
         "message": "User deleted successfully"
     })))

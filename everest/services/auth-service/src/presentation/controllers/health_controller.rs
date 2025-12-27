@@ -1,7 +1,8 @@
-use crate::AppState;
-use crate::application::dtos::health::HealthResponse;
-use crate::application::health_service::HealthService;
 use actix_web::{HttpResponse, Responder, get, web};
+
+use crate::AppState;
+use crate::application::dtos::health::{HealthResponse, HealthStatus};
+use crate::application::health_service::HealthService;
 
 #[utoipa::path(
     get,
@@ -14,25 +15,19 @@ use actix_web::{HttpResponse, Responder, get, web};
 )]
 #[get("/health")]
 pub async fn health_check(state: web::Data<AppState>) -> impl Responder {
-    // web::Data<T> is essentially an Arc<T>.
-    // .into_inner() gives you the Arc<AppState>.
     let app_state = state.into_inner();
-
-    // Pass the Arc to your service
     let svc = HealthService::new(app_state);
 
     match svc.check().await {
-        Ok(report) => {
+        Ok((status, details)) => {
             let response = HealthResponse {
-                status: report.status,
-                database: report.database,
+                status: status.clone(),
+                details: Some(details),
             };
 
-            if response.database {
-                HttpResponse::Ok().json(response)
-            } else {
-                // If DB is down, return 503
-                HttpResponse::ServiceUnavailable().json(response)
+            match status {
+                HealthStatus::Up => HttpResponse::Ok().json(response),
+                HealthStatus::Down => HttpResponse::ServiceUnavailable().json(response),
             }
         }
         Err(_) => HttpResponse::InternalServerError().finish(),

@@ -23,9 +23,13 @@ impl AdminService {
 
 #[async_trait]
 impl AdminServiceTrait for AdminService {
-    async fn list_users(&self, limit: i64, offset: i64) -> AppResult<Vec<User>> {
-        // Access the repository through state
-        self.state.user_repo.list_active(limit, offset).await
+async fn list_users(&self, limit: i64, offset: i64) -> AppResult<(Vec<User>, i64)> {
+        let users = self.state.user_repo.list_active(limit, offset).await?;
+        
+        // Ensure your repository has this method (we added it in a previous step)
+        let total = self.state.user_repo.count_active(None).await?;
+
+        Ok((users, total))
     }
 
     async fn get_user(&self, user_id: &str) -> AppResult<User> {

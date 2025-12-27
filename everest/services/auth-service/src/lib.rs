@@ -10,15 +10,13 @@ pub mod domain;
 pub mod infrastructure;
 pub mod presentation;
 use crate::core::{config::Config, database};
-use crate::domain::repositories::{RegistrationRepository, UserRepository};
+use crate::domain::repositories::{InvitationRepository, RegistrationRepository, UserRepository};
 use crate::infrastructure::keycloak_client::HttpKeycloakClient;
 use crate::infrastructure::repositories::{
-    registration_repo::PgRegistrationRepository, user_repo::PgUserRepository,
+    invitation_repo::PgInvitationRepository, registration_repo::PgRegistrationRepository,
+    user_repo::PgUserRepository,
 };
-use presentation::{
-    controllers::admin_controller, controllers::authentication_controller,
-    controllers::health_controller, controllers::registration_controller, openapi::ApiDoc,
-};
+use presentation::{controllers::health_controller, openapi::ApiDoc};
 
 pub struct AppState {
     pub config: Config,
@@ -26,6 +24,7 @@ pub struct AppState {
     pub keycloak_client: Arc<HttpKeycloakClient>,
     pub user_repo: Arc<dyn UserRepository>,
     pub registration_repo: Arc<dyn RegistrationRepository>,
+    pub invitation_repo: Arc<dyn InvitationRepository>,
 }
 
 pub async fn run() -> anyhow::Result<()> {
@@ -37,6 +36,7 @@ pub async fn run() -> anyhow::Result<()> {
     // 2. Pass db_pool to repositories
     let user_repo = Arc::new(PgUserRepository::new(db_pool.clone()));
     let registration_repo = Arc::new(PgRegistrationRepository::new(db_pool.clone()));
+    let invitation_repo = Arc::new(PgInvitationRepository::new(db_pool.clone()));
 
     let keycloak_client = Arc::new(HttpKeycloakClient::new(
         config.keycloak_url.clone(),
@@ -53,6 +53,7 @@ pub async fn run() -> anyhow::Result<()> {
         keycloak_client,
         user_repo,
         registration_repo,
+        invitation_repo,
     });
 
     let openapi = ApiDoc::openapi();
@@ -70,17 +71,11 @@ pub async fn run() -> anyhow::Result<()> {
         App::new()
             .wrap(cors)
             .wrap(Logger::default())
-            .app_data(app_state.clone()) // This injects AppState into your handlers
+            .app_data(app_state.clone())
             .service(
                 SwaggerUi::new("/swagger-ui/{_:.*}").url("/api-docs/openapi.json", openapi.clone()),
             )
-            .service(
-                web::scope("/api/v1")
-                    .configure(health_controller::configure)
-                    .configure(registration_controller::configure)
-                    .configure(authentication_controller::configure)
-                    .configure(admin_controller::configure),
-            )
+            .service(web::scope("/api/v1").configure(health_controller::configure))
     })
     .bind(&server_addr)?
     .run()
