@@ -1,8 +1,9 @@
-use crate::domain::entities::{Station, UserReview};
-use crate::infrastructure::error::AppResult;
+use super::entities::{Station, UserReview};
+use crate::core::errors::AppResult;
+use async_trait::async_trait;
 
-#[async_trait::async_trait]
-pub trait StationRepositoryTrait {
+#[async_trait]
+pub trait StationRepository: Send + Sync {
     async fn find_nearby(
         &self,
         latitude: f64,
@@ -12,8 +13,8 @@ pub trait StationRepositoryTrait {
     ) -> AppResult<Vec<Station>>;
 }
 
-#[async_trait::async_trait]
-pub trait ReviewRepositoryTrait {
+#[async_trait]
+pub trait ReviewRepository: Send + Sync {
     async fn create(
         &self,
         review_id: String,
@@ -25,7 +26,6 @@ pub trait ReviewRepositoryTrait {
     ) -> AppResult<UserReview>;
 
     async fn find_by_station(&self, station_id: &str) -> AppResult<Vec<UserReview>>;
-
     async fn find_by_id(&self, review_id: &str) -> AppResult<Option<UserReview>>;
 
     async fn update(
