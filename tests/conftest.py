@@ -4,9 +4,11 @@ from datetime import UTC, date, datetime
 
 import pytest
 
+from resolve_agent.config import Settings
 from resolve_agent.domain.clock import Clock
 from resolve_agent.domain.db import connect, init_schema
 from resolve_agent.domain.seed import seed
+from resolve_agent.tools import ToolContext
 
 TODAY = date(2026, 10, 16)
 
@@ -28,3 +30,15 @@ def seeded(conn: sqlite3.Connection) -> sqlite3.Connection:
 @pytest.fixture
 def clock() -> Clock:
     return lambda: datetime(2026, 10, 16, 12, 0, tzinfo=UTC)
+
+
+@pytest.fixture
+def ctx(seeded: sqlite3.Connection, clock: Clock) -> ToolContext:
+    """Tool context for the authenticated customer Alice."""
+    return ToolContext(
+        customer_id="cus_alice",
+        conn=seeded,
+        settings=Settings.from_env({}),
+        clock=clock,
+        request_id="req_test",
+    )

@@ -43,3 +43,9 @@ sqlite3 data/resolve.db "select id, status, total_cents from orders"
 Pure functions in `policy/rules.py` return a `Decision` (allowed, reason code, requires_approval, facts).
 The LLM never decides policy; it only phrases a `Decision` via `explain()`. Assumptions are listed
 at the top of `rules.py`.
+
+## Tool layer (step 3)
+
+`tools/registry.py` builds JSON schemas from type hints, validates arguments strictly, runs write
+tools in one transaction, never raises, and audits every call. `tools/commerce.py` holds the tools.
+The customer comes from `ToolContext` (set by the auth layer), never from model arguments.

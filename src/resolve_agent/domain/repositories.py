@@ -219,6 +219,15 @@ class ReturnRepository:
         row = self._conn.execute("SELECT * FROM returns WHERE id = ?", (return_id,)).fetchone()
         return _return(row) if row else None
 
+    def get_for_customer(self, return_id: str, customer_id: str) -> ReturnRequest | None:
+        """Customer-scoped lookup (joins the order). Tools must use this, never `get`."""
+        row = self._conn.execute(
+            "SELECT r.* FROM returns r JOIN orders o ON o.id = r.order_id"
+            " WHERE r.id = ? AND o.customer_id = ?",
+            (return_id, customer_id),
+        ).fetchone()
+        return _return(row) if row else None
+
     def for_order(self, order_id: str) -> list[ReturnRequest]:
         rows = self._conn.execute(
             "SELECT * FROM returns WHERE order_id = ? ORDER BY created_at, id", (order_id,)
