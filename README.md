@@ -6,13 +6,16 @@ Scope: returns, exchanges, where is my order.
 
 ## Dev setup
 
+Requires [uv](https://docs.astral.sh/uv/).
+
 ```bash
-python -m venv .venv && source .venv/bin/activate
-pip install -e ".[dev]"
-pytest
-ruff check .
-mypy
+uv sync                 # create .venv, install deps from uv.lock
+uv run pytest
+uv run ruff check .
+uv run mypy
 ```
+
+Add dependencies with `uv add <pkg>` (runtime) or `uv add --dev <pkg>` (dev).
 
 ## Layout
 
@@ -25,3 +28,12 @@ mypy
 | `guardrails/` | Input and output safety checks |
 | `obs/` | Tracing, logging, metrics |
 | `evals/` | Golden sets, graders, reports |
+
+## Database (step 1)
+
+SQLite via the standard library, integer cents for money, constraints enforced by the schema.
+
+```bash
+uv run python -m resolve_agent.domain.seed   # dev only: recreates data/resolve.db with edge-case data
+sqlite3 data/resolve.db "select id, status, total_cents from orders"
+```
