@@ -59,3 +59,13 @@ at startup. Inspect a trace with:
 ```bash
 uv run python -m resolve_agent.obs.render traces/spans.jsonl [trace_id]
 ```
+
+## LLM client (step 5)
+
+`llm/` has provider-neutral types, `AnthropicClient` (plain `httpx`: retries with jittered backoff
+inside a time budget, per-attempt timeouts, SSE streaming, error classification), `FakeLLM` for
+tests and evals, and `ObservedLLMClient` (span, token/cost metrics per call). Wrap the real client:
+
+```python
+client = ObservedLLMClient(AnthropicClient(settings.llm), prices=settings.llm.prices)
+```

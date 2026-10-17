@@ -145,3 +145,28 @@ def test_threads_start_new_traces_unless_the_context_is_copied() -> None:
     assert by_name["plain"].trace_id != root.trace_id
     assert by_name["copied"].trace_id == root.trace_id
     assert by_name["copied"].parent_id == root.span_id
+
+
+def test_closing_a_generator_inside_a_span_is_cancellation_not_error() -> None:
+    exporter = InMemoryExporter()
+    tracer = Tracer([exporter])
+
+    def numbers():  # type: ignore[no-untyped-def]
+        with tracer.span("stream"):
+            yield 1
+            yield 2
+
+    gen = numbers()
+    next(gen)
+    gen.close()
+    span = exporter.spans[0]
+    assert span.status == "ok" and span.attributes["cancelled"] is True
+
+
+def test_a_sanitised_error_recorded_by_the_caller_is_kept() -> None:
+    exporter = InMemoryExporter()
+    tracer = Tracer([exporter])
+    with pytest.raises(ValueError), tracer.span("s") as span:
+        span.record_error("ValueError")
+        raise ValueError("contains customer text")
+    assert exporter.spans[0].error == "ValueError"

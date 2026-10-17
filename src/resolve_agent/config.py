@@ -22,11 +22,23 @@ class PolicySettings:
 
 
 @dataclass(frozen=True)
+class ModelPrice:
+    """USD per million tokens. Fill these in from your pricing page; nothing is hardcoded."""
+
+    input_per_mtok: Decimal
+    output_per_mtok: Decimal
+
+
+@dataclass(frozen=True)
 class LLMSettings:
     api_key: str = field(default="", repr=False)
     router_model: str = "claude-haiku-5-5"
     agent_model: str = "claude-sonnet-5-5"
-    timeout_s: float = 10.0
+    timeout_s: float = 10.0  # per attempt; set tighter per request for latency-critical calls
+    base_url: str = "https://api.anthropic.com"
+    max_retries: int = 2
+    total_budget_s: float = 15.0  # attempts plus backoff must fit in this
+    prices: Mapping[str, ModelPrice] = field(default_factory=dict)
 
 
 @dataclass(frozen=True)
@@ -57,7 +69,12 @@ class Settings:
             router_model=e.get("RESOLVE_ROUTER_MODEL", defaults.llm.router_model),
             agent_model=e.get("RESOLVE_AGENT_MODEL", defaults.llm.agent_model),
             timeout_s=float(e.get("RESOLVE_LLM_TIMEOUT_S", defaults.llm.timeout_s)),
+            base_url=e.get("RESOLVE_LLM_BASE_URL", defaults.llm.base_url).rstrip("/"),
+            max_retries=int(e.get("RESOLVE_LLM_MAX_RETRIES", defaults.llm.max_retries)),
+            total_budget_s=float(e.get("RESOLVE_LLM_BUDGET_S", defaults.llm.total_budget_s)),
         )
+        if llm.max_retries < 0:
+            raise ValueError("RESOLVE_LLM_MAX_RETRIES must be >= 0")
         return cls(
             env=env,
             db_path=e.get("RESOLVE_DB_PATH", defaults.db_path),

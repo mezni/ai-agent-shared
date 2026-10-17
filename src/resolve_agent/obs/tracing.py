@@ -14,6 +14,7 @@ Never put secrets or raw customer messages in attributes: they are written to di
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 import secrets
@@ -160,8 +161,12 @@ class Tracer:
         token = _current.set(span)
         try:
             yield span
+        except (GeneratorExit, asyncio.CancelledError):
+            span.set_attribute("cancelled", True)  # abandoned or cancelled, not a failure
+            raise
         except BaseException as exc:
-            span.record_error(f"{type(exc).__name__}: {exc}")
+            if span.status != "error":  # code may have recorded a sanitised error already
+                span.record_error(f"{type(exc).__name__}: {exc}")
             raise
         finally:
             span.end_ns = self._monotonic_ns()

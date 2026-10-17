@@ -58,3 +58,25 @@ def test_observability_overrides() -> None:
     s = Settings.from_env({"RESOLVE_LOG_JSON": "false", "RESOLVE_TRACE_PATH": ""})
     assert s.log_json is False
     assert s.trace_path == ""
+
+
+def test_llm_defaults_and_overrides() -> None:
+    d = Settings.from_env({}).llm
+    assert (d.max_retries, d.base_url, d.prices) == (2, "https://api.anthropic.com", {})
+    s = Settings.from_env(
+        {
+            "RESOLVE_LLM_BASE_URL": "http://localhost:8080/",
+            "RESOLVE_LLM_MAX_RETRIES": "0",
+            "RESOLVE_LLM_BUDGET_S": "5",
+        }
+    )
+    assert (s.llm.base_url, s.llm.max_retries, s.llm.total_budget_s) == (
+        "http://localhost:8080",
+        0,
+        5.0,
+    )
+
+
+def test_negative_retries_are_rejected() -> None:
+    with pytest.raises(ValueError, match="MAX_RETRIES"):
+        Settings.from_env({"RESOLVE_LLM_MAX_RETRIES": "-1"})
