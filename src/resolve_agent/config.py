@@ -18,6 +18,7 @@ VALID_ENVS = ("dev", "staging", "prod")
 class PolicySettings:
     return_window_days: int = 30
     auto_refund_limit: Decimal = Decimal("50")
+    exchangeable_categories: frozenset[str] = frozenset({"apparel", "footwear", "accessories"})
 
 
 @dataclass(frozen=True)

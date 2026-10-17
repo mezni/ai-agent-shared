@@ -37,3 +37,9 @@ SQLite via the standard library, integer cents for money, constraints enforced b
 uv run python -m resolve_agent.domain.seed   # dev only: recreates data/resolve.db with edge-case data
 sqlite3 data/resolve.db "select id, status, total_cents from orders"
 ```
+
+## Policy engine (step 2)
+
+Pure functions in `policy/rules.py` return a `Decision` (allowed, reason code, requires_approval, facts).
+The LLM never decides policy; it only phrases a `Decision` via `explain()`. Assumptions are listed
+at the top of `rules.py`.
