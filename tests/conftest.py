@@ -8,6 +8,7 @@ from resolve_agent.config import Settings
 from resolve_agent.domain.clock import Clock
 from resolve_agent.domain.db import connect, init_schema
 from resolve_agent.domain.seed import seed
+from resolve_agent.obs import InMemoryExporter, Metrics, Tracer, set_metrics, set_tracer
 from resolve_agent.tools import ToolContext
 
 TODAY = date(2026, 10, 16)
@@ -42,3 +43,19 @@ def ctx(seeded: sqlite3.Connection, clock: Clock) -> ToolContext:
         clock=clock,
         request_id="req_test",
     )
+
+
+@pytest.fixture(autouse=True)
+def _reset_observability() -> Iterator[None]:
+    """Global tracer and metrics must never leak between tests."""
+    yield
+    set_tracer(Tracer())
+    set_metrics(Metrics())
+
+
+@pytest.fixture
+def spans() -> InMemoryExporter:
+    """Install a tracer that keeps finished spans in memory."""
+    exporter = InMemoryExporter()
+    set_tracer(Tracer([exporter]))
+    return exporter

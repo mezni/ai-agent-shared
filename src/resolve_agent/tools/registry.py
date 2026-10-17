@@ -17,6 +17,7 @@ from typing import Annotated, Any, Literal, Union, get_args, get_origin, get_typ
 
 from resolve_agent.domain.db import transaction
 from resolve_agent.domain.repositories import AuditLog
+from resolve_agent.obs import get_metrics, get_tracer
 from resolve_agent.tools.context import ToolContext
 from resolve_agent.tools.result import ToolError, ToolResult
 
@@ -165,8 +166,34 @@ class ToolRegistry:
 
     def call(self, name: str, raw_args: object, ctx: ToolContext) -> ToolResult:
         spec = self._tools.get(name)
-        if spec is None:
-            return _failure("unknown_tool", f"There is no tool named '{name}'.")
+        label = name if spec else "unknown"  # never use model-supplied names as span/metric labels
+        attributes = {
+            "tool.name": label,
+            "customer_id": ctx.customer_id,
+            "request_id": ctx.request_id,
+        }
+        with get_tracer().span(f"tool.{label}", kind="tool", attributes=attributes) as span:
+            if spec is None:
+                result = _failure("unknown_tool", f"There is no tool named '{name}'.")
+                validated: dict[str, object] = {}
+            else:
+                validated, result = self._execute(spec, raw_args, ctx)
+                span.set_attribute("tool.writes", spec.writes)
+            span.set_attribute("tool.ok", result.ok)
+            if result.error_code:
+                span.set_attribute("tool.error_code", result.error_code)
+            if result.error_code == "internal_error":
+                span.record_error("internal_error")
+            outcome = "ok" if result.ok else (result.error_code or "error")
+            get_metrics().inc("tool.calls", 1.0, tool=label, outcome=outcome)
+            if spec is not None:
+                self._audit(spec, ctx, validated, result, span.trace_id)
+            return result
+
+    @staticmethod
+    def _execute(
+        spec: ToolSpec, raw_args: object, ctx: ToolContext
+    ) -> tuple[dict[str, object], ToolResult]:
         validated: dict[str, object] = {}
         try:
             validated = spec.validate(raw_args)
@@ -175,16 +202,15 @@ class ToolRegistry:
         except ToolError as err:
             result = ToolResult(False, err.data, err.code, err.message)
         except Exception:
-            logger.exception("tool %s crashed", name)
+            logger.exception("tool.crashed", extra={"fields": {"tool": spec.name}})
             result = _failure(
                 "internal_error", "The tool failed unexpectedly. Try again or escalate."
             )
-        self._audit(spec, ctx, validated, result)
-        return result
+        return validated, result
 
     @staticmethod
     def _audit(
-        spec: ToolSpec, ctx: ToolContext, args: dict[str, object], result: ToolResult
+        spec: ToolSpec, ctx: ToolContext, args: dict[str, object], result: ToolResult, trace_id: str
     ) -> None:
         try:
             AuditLog(ctx.conn, ctx.clock).record(
@@ -197,10 +223,11 @@ class ToolRegistry:
                     "error_code": result.error_code,
                     "args": args,
                     "request_id": ctx.request_id,
+                    "trace_id": trace_id,
                 },
             )
         except Exception:
-            logger.exception("failed to write audit entry for %s", spec.name)
+            logger.exception("audit.write_failed", extra={"fields": {"tool": spec.name}})
 
 
 def _failure(code: str, message: str) -> ToolResult:

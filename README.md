@@ -49,3 +49,13 @@ at the top of `rules.py`.
 `tools/registry.py` builds JSON schemas from type hints, validates arguments strictly, runs write
 tools in one transaction, never raises, and audits every call. `tools/commerce.py` holds the tools.
 The customer comes from `ToolContext` (set by the auth layer), never from model arguments.
+
+## Observability (step 4)
+
+`obs/` provides contextvars-based tracing (spans exported to `traces/spans.jsonl`), JSON logs that
+carry `trace_id`/`span_id`, and in-process metrics with p50/p95/p99. Call `obs.setup(settings)` once
+at startup. Inspect a trace with:
+
+```bash
+uv run python -m resolve_agent.obs.render traces/spans.jsonl [trace_id]
+```

@@ -34,6 +34,8 @@ class Settings:
     env: str = "dev"
     db_path: str = "data/resolve.db"
     log_level: str = "INFO"
+    log_json: bool = True
+    trace_path: str = "traces/spans.jsonl"  # empty string disables the JSONL trace file
     policy: PolicySettings = field(default_factory=PolicySettings)
     llm: LLMSettings = field(default_factory=LLMSettings)
 
@@ -60,5 +62,7 @@ class Settings:
             env=env,
             db_path=e.get("RESOLVE_DB_PATH", defaults.db_path),
             log_level=e.get("RESOLVE_LOG_LEVEL", defaults.log_level).upper(),
+            log_json=e.get("RESOLVE_LOG_JSON", "1").lower() not in {"0", "false", "no"},
+            trace_path=e.get("RESOLVE_TRACE_PATH", defaults.trace_path),
             llm=llm,
         )

@@ -46,3 +46,15 @@ def test_settings_are_frozen() -> None:
     s = Settings.from_env({})
     with pytest.raises(dataclasses.FrozenInstanceError):
         s.env = "prod"  # type: ignore[misc]
+
+
+def test_observability_defaults() -> None:
+    s = Settings.from_env({})
+    assert s.log_json is True
+    assert s.trace_path == "traces/spans.jsonl"
+
+
+def test_observability_overrides() -> None:
+    s = Settings.from_env({"RESOLVE_LOG_JSON": "false", "RESOLVE_TRACE_PATH": ""})
+    assert s.log_json is False
+    assert s.trace_path == ""
