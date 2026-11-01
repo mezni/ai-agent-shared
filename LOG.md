@@ -643,4 +643,41 @@ Created `engineering/testing/test-strategy.md`, defining:
 
 **Next Step:** Step 26 — Create Shared Synthetic Dataset.
 
+## Step 26: Create Shared Synthetic Dataset
+
+**Component/Step:** Shared Evaluation Foundation — Synthetic Data
+
+**Goal:** Create a common synthetic customer-support dataset for all three AI agent implementations.
+
+**Problem/Friction:**
+Each implementation requires consistent customer, ticket, order, product, and policy fixtures. Independent datasets could introduce differences and make cross-implementation evaluation unreliable.
+
+**Solution:**
+Created:
+
+- `evaluation/datasets/README.md`
+- `evaluation/datasets/synthetic-data.json`
+
+The baseline dataset includes:
+
+- 4 synthetic customers.
+- 5 synthetic products.
+- 5 synthetic orders.
+- 6 synthetic support tickets.
+- 3 synthetic business policy records.
+- Fixed reference date: `2026-10-31`.
+- Dataset version: `1.0.0`.
+
+The dataset includes order inquiries, refund requests, damaged-item reports, missing order references, and general support questions.
+
+**Trade-offs:**
+- A single shared JSON fixture simplifies distribution and comparison.
+- A small baseline dataset is easy to understand but does not provide sufficient coverage for comprehensive evaluation.
+- Final refund decisions are intentionally excluded; deterministic policy evaluation remains the application's responsibility.
+- Fixed dates improve reproducibility but require controlled clocks in date-sensitive tests.
+
+**Status:** Completed — baseline synthetic dataset created.
+
+**Next Step:** Step 27 — Create Classification Evaluation Dataset.
+
 
