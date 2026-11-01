@@ -193,3 +193,22 @@ docs(ai-agent-shared): define shared domain model
 **Status:** Completed
 
 **Next:** Step 7 — Define System Architecture.
+
+
+## Step 7: Define System Architecture
+
+**Goal:** Establish a shared architecture for the Python, LangChain/LangGraph, and Rust implementations.
+
+**Problem:** Without a common architecture, the three implementations could develop inconsistent component responsibilities, business logic boundaries, and security controls.
+
+**Solution:** Created `specifications/06-architecture.md` using Modular Monolith and Clean Architecture. Defined Entities, Use Cases, Interface Adapters, and Frameworks & Drivers. Established the inward Dependency Rule and documented Guardrails, Security, and Observability as cross-cutting capabilities.
+
+**Trade-offs:**
+- Modular monolith instead of microservices reduces deployment and operational complexity.
+- Clean Architecture introduces explicit boundaries and some initial abstraction overhead, but protects business logic from framework changes.
+- Repository and provider abstractions allow infrastructure to change without rewriting use cases.
+- Different orchestration technologies are permitted as long as shared contracts and business behavior remain consistent.
+
+**Status:** Completed
+
+**Next:** Step 8 — Define Definition of Done.
