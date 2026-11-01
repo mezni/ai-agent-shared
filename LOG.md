@@ -212,3 +212,21 @@ docs(ai-agent-shared): define shared domain model
 **Status:** Completed
 
 **Next:** Step 8 — Define Definition of Done.
+
+
+## Step 9: Document Assumptions and Open Questions
+
+**Goal:** Distinguish confirmed decisions, working assumptions, unresolved questions, and project risks.
+
+**Problem:** Unvalidated assumptions can become hidden requirements and lead to premature architecture decisions or implementation rework.
+
+**Solution:** Created `specifications/assumptions-and-open-questions.md`, documenting confirmed decisions, working assumptions, prioritized open questions, a risk register, technical constraints, decision governance, and a decision backlog.
+
+**Trade-offs:**
+- Keeping questions open avoids premature commitments but requires ongoing decision tracking.
+- Qualitative risk ratings provide an initial prioritization without implying measured probabilities.
+- Provider, database, authentication, and evaluation thresholds remain open until their respective design stages.
+
+**Status:** Completed
+
+**Next:** Stage 1 review, followed by Step 10 — Define System Context.
