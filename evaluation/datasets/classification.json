@@ -1,0 +1,205 @@
+{
+  "dataset_id": "AI-AGENT-CLASSIFICATION",
+  "dataset_version": "1.0.0",
+  "task": "ticket_classification",
+  "reference_date": "2026-10-31",
+  "description": "Synthetic labeled support tickets for evaluating intent and category classification across portfolio implementations.",
+  "label_vocabulary": {
+    "intent": [
+      "REFUND_REQUEST",
+      "EXCHANGE_REQUEST",
+      "ORDER_INQUIRY",
+      "GENERAL_INQUIRY"
+    ],
+    "category": [
+      "REFUND",
+      "EXCHANGE",
+      "ORDER_STATUS",
+      "DELIVERY",
+      "PRODUCT_INFORMATION",
+      "GENERAL"
+    ]
+  },
+  "cases": [
+    {
+      "case_id": "CLS-001",
+      "input": {
+        "subject": "Request for a refund",
+        "message": "I received my order last week, but I would like to return it and get my money back."
+      },
+      "expected": {
+        "intent": "REFUND_REQUEST",
+        "category": "REFUND"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["explicit_refund", "return"]
+      }
+    },
+    {
+      "case_id": "CLS-002",
+      "input": {
+        "subject": "Not satisfied with my purchase",
+        "message": "The product is not what I expected. Can you tell me how I can send it back and receive a refund?"
+      },
+      "expected": {
+        "intent": "REFUND_REQUEST",
+        "category": "REFUND"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["implicit_refund", "return"]
+      }
+    },
+    {
+      "case_id": "CLS-003",
+      "input": {
+        "subject": "Refund for order ORD-1005",
+        "message": "My package arrived damaged. I want a refund rather than a replacement."
+      },
+      "expected": {
+        "intent": "REFUND_REQUEST",
+        "category": "REFUND"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["damaged_item", "refund_preference"]
+      }
+    },
+    {
+      "case_id": "CLS-004",
+      "input": {
+        "subject": "Change my product",
+        "message": "I ordered the wrong size. Can I exchange it for a larger one?"
+      },
+      "expected": {
+        "intent": "EXCHANGE_REQUEST",
+        "category": "EXCHANGE"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["explicit_exchange", "size"]
+      }
+    },
+    {
+      "case_id": "CLS-005",
+      "input": {
+        "subject": "Replacement request",
+        "message": "The item I received is not the model I selected. I would prefer to swap it for the correct model."
+      },
+      "expected": {
+        "intent": "EXCHANGE_REQUEST",
+        "category": "EXCHANGE"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["implicit_exchange", "wrong_item"]
+      }
+    },
+    {
+      "case_id": "CLS-006",
+      "input": {
+        "subject": "Different color",
+        "message": "Can I trade the black version for the blue version?"
+      },
+      "expected": {
+        "intent": "EXCHANGE_REQUEST",
+        "category": "EXCHANGE"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["exchange_synonym", "product_variant"]
+      }
+    },
+    {
+      "case_id": "CLS-007",
+      "input": {
+        "subject": "Where is my order?",
+        "message": "Could you check the current status of order ORD-1002?"
+      },
+      "expected": {
+        "intent": "ORDER_INQUIRY",
+        "category": "ORDER_STATUS"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["explicit_order_lookup", "order_id"]
+      }
+    },
+    {
+      "case_id": "CLS-008",
+      "input": {
+        "subject": "Delivery update",
+        "message": "I placed an order a few days ago. Has it shipped yet?"
+      },
+      "expected": {
+        "intent": "ORDER_INQUIRY",
+        "category": "DELIVERY"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["shipping_status", "implicit_order_lookup"]
+      }
+    },
+    {
+      "case_id": "CLS-009",
+      "input": {
+        "subject": "Order confirmation",
+        "message": "I did not receive an order confirmation email. Can you verify whether my purchase went through?"
+      },
+      "expected": {
+        "intent": "ORDER_INQUIRY",
+        "category": "ORDER_STATUS"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["order_confirmation", "order_lookup"]
+      }
+    },
+    {
+      "case_id": "CLS-010",
+      "input": {
+        "subject": "Product specifications",
+        "message": "Does the Fiber 500 plan include a Wi-Fi router?"
+      },
+      "expected": {
+        "intent": "GENERAL_INQUIRY",
+        "category": "PRODUCT_INFORMATION"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["product_question", "catalog_information"]
+      }
+    },
+    {
+      "case_id": "CLS-011",
+      "input": {
+        "subject": "Business hours",
+        "message": "What time does your customer support team close on weekdays?"
+      },
+      "expected": {
+        "intent": "GENERAL_INQUIRY",
+        "category": "GENERAL"
+      },
+      "metadata": {
+        "difficulty": "easy",
+        "tags": ["business_information", "support_hours"]
+      }
+    },
+    {
+      "case_id": "CLS-012",
+      "input": {
+        "subject": "Need help choosing a plan",
+        "message": "I am comparing your available plans. Which one would be suitable for a household with several people working from home?"
+      },
+      "expected": {
+        "intent": "GENERAL_INQUIRY",
+        "category": "PRODUCT_INFORMATION"
+      },
+      "metadata": {
+        "difficulty": "medium",
+        "tags": ["product_recommendation", "plan_comparison"]
+      }
+    }
+  ]
+}

@@ -681,3 +681,24 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 **Next Step:** Step 27 — Create Classification Evaluation Dataset.
 
 
+## Step 27: Create Classification Evaluation Dataset
+
+**Component/Step:** Shared Evaluation Dataset — Ticket Classification
+
+**Goal:** Establish a shared labeled benchmark for evaluating ticket intent and category classification across the Python, LangChain, and Rust implementations.
+
+**Problem/Friction:** Without a common dataset and consistent labels, classification results cannot be compared reliably across implementations. Different examples or label definitions would make accuracy and macro F1 measurements inconsistent.
+
+**Solution:** Created `evaluation/datasets/classification.json` with 12 synthetic labeled ticket cases. The dataset contains four intent labels, six category labels, expected classification outputs, difficulty levels, and descriptive tags. Added validation commands for JSON syntax, case count, and label distribution.
+
+**Trade-offs:**
+- A 12-case dataset is easy to inspect and use during initial development, but is too small for strong statistical conclusions.
+- Benchmark labels must remain aligned with the canonical `AgentIntent` and ticket-category contracts.
+- Confidence scoring is excluded until a shared confidence contract and evaluation methodology are defined.
+- Synthetic examples avoid exposing real customer information.
+
+**Status:** Completed
+
+**Next Step:** Step 28 — Create Tool Selection Evaluation Dataset
+
+
