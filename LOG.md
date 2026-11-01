@@ -813,3 +813,36 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 **Next Step:** Step 33 — Define the Plain Python Implementation Plan
 
 
+
+## Step 33: Define Plain Python Implementation Plan
+
+**Component/Step:** Stage 5 — Implementation Planning / Plain Python
+
+**Goal:** Define the technical implementation strategy for `ai-agent-py` using plain Python and Streamlit, aligned with the shared architecture, domain model, contracts, security standards, guardrails, and evaluation protocol.
+
+**Problem/Friction:** The shared specifications define what the system must do, but the Python implementation still needs a concrete repository structure, technology stack, layer responsibilities, orchestration strategy, data access strategy, testing approach, and implementation sequence.
+
+**Solution:** Created `implementations/ai-agent-py.md`.
+
+Defined:
+- Plain Python and Streamlit technology stack.
+- Modular Monolith with Clean Architecture.
+- Python `src` layout using the `ai_agent_py` package.
+- Domain, application, adapters, and infrastructure responsibilities.
+- Custom Python orchestrator without LangChain or LangGraph.
+- LLM provider abstraction.
+- JSON fixture repositories and read-only data access.
+- In-memory human approval adapter with a future persistence seam.
+- Security, guardrail, evaluation, testing, and observability requirements.
+- Incremental implementation sequence.
+- Architecture risks, trade-offs, and acceptance criteria.
+
+**Trade-offs:** Custom orchestration provides transparency and framework independence but requires explicit implementation of workflow coordination and state management. JSON fixtures simplify the initial environment but do not provide production-grade persistence or concurrency. In-memory approval supports the initial demonstration but loses state on restart.
+
+**Outcome:** The Python implementation has a documented technical plan. Implementation remains deferred until all implementation plans and the portfolio readiness review are complete.
+
+**Status:** Completed
+
+**Next Step:** Step 34 — Define the LangChain + LangGraph Implementation Plan.
+
+
