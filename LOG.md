@@ -248,3 +248,22 @@ docs(ai-agent-shared): define shared domain model
 **Status:** Completed
 
 **Next:** Step 11 — Define Component Architecture.
+
+
+## Step 11: Define Component Architecture
+
+**Goal:** Decompose the system into components with explicit responsibilities, interfaces, and Clean Architecture boundaries.
+
+**Problem:** The system context describes external interactions but does not explain how internal responsibilities are separated or how dependencies are controlled.
+
+**Solution:** Created `architecture/component-diagram.md`. Defined the four Clean Architecture layers, domain and application components, input/output ports, adapters, cross-cutting concerns, component interaction sequence, dependency rules, and package mappings for Python, LangChain/LangGraph, and Rust.
+
+**Trade-offs:**
+- A shared logical architecture improves consistency but permits different framework implementations.
+- Application-owned ports preserve independence from LLM and persistence vendors.
+- LangGraph is treated as a workflow implementation detail rather than the shared domain model.
+- The modular monolith keeps initial deployment simple while retaining clear module boundaries.
+
+**Status:** Completed
+
+**Next:** Step 12 — Define Sequence Diagrams.
