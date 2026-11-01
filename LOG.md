@@ -468,3 +468,42 @@ Documented:
 
 **Next:** Step 20 — Evaluation Metrics
 
+
+
+## Step 20: Define Evaluation Metrics
+
+**Goal:** Establish measurable indicators and initial acceptance thresholds for agent quality, safety, reliability, and performance.
+
+**Problem:** Without consistent metric definitions, evaluation results cannot reliably demonstrate improvements, regressions, or release readiness across implementations.
+
+**Solution:** Created `engineering/evaluation/metrics.md` defining classification, entity extraction, tool selection, policy compliance, approval integrity, response quality, security, reliability, performance, and cross-implementation parity metrics.
+
+**Trade-offs:**
+- Strict thresholds protect critical business rules but may block releases until defects are corrected.
+- Human quality scoring captures subjective response characteristics but introduces reviewer variability.
+- Performance targets require measured baselines before meaningful thresholds can be established.
+- Shared metrics improve comparability but require consistent test data and reporting.
+
+**Status:** Complete
+
+**Next:** Step 21 — Security Threat Model
+
+
+## Step 21: Define Security Threat Model
+
+**Goal:** Identify assets, threat actors, trust boundaries, attack surfaces, and security risks across the AI agent portfolio.
+
+**Problem:** Security controls cannot be designed systematically without understanding what must be protected, where untrusted data enters, and how threats could affect application behavior.
+
+**Solution:** Created `engineering/security/threat-model.md` using STRIDE to classify threats. Documented protected assets, threat actors, trust boundaries, attack surfaces, risk levels, mitigations, security tests, residual risks, and traceability.
+
+**Trade-offs:**
+- STRIDE provides structured threat coverage but requires periodic review as the architecture evolves.
+- Qualitative risk ratings support initial prioritization but must be refined with implementation evidence.
+- Strong controls increase development effort but reduce the likelihood and impact of unauthorized access and policy violations.
+
+**Status:** Complete
+
+**Next:** Step 22 — Authentication and Authorization
+
+
