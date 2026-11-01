@@ -961,3 +961,28 @@ Evaluation quality and performance remain separate measured result sets.
 **Next Step:** Step 37 — Portfolio Readiness Review.
 
 
+## Step 37: Portfolio Readiness Review
+
+**Goal:** Perform a final readiness review of shared specifications, architecture, domain contracts, engineering standards, evaluation assets, and implementation plans before beginning implementation.
+
+**Problem:** Multiple implementation repositories will consume the same requirements and evaluation assets. Inconsistent domain vocabulary, business rules, or architecture decisions could cause implementation drift and invalidate cross-framework comparisons.
+
+**Solution:**
+- Created `comparisons/portfolio-readiness-review.md`.
+- Reviewed documented requirements, architecture decisions, engineering standards, evaluation assets, and implementation plans.
+- Confirmed Modular Monolith and Clean Architecture as authoritative architecture decisions.
+- Confirmed the initial business policy baseline: 30-calendar-day return window, CAD 100 refund cap, and damaged-goods image verification.
+- Confirmed the three implementation strategies: custom Python orchestration, LangChain/LangGraph, and Rust with Rig/RustView.
+- Identified canonical domain/agent-contract vocabulary reconciliation as a readiness blocker.
+- Defined local repository verification and validation commands.
+- Recorded the limitations of in-memory approval and checkpointing.
+- Established a conditional readiness gate before implementation.
+
+**Trade-offs:**
+- A documentation-based review provides a structured implementation gate but cannot prove local repository integrity.
+- In-memory infrastructure simplifies the initial demonstrations but does not provide durable workflow recovery.
+- Shared contracts and datasets improve comparability but require explicit vocabulary and schema governance.
+
+**Status:** Readiness review documented; implementation gate is conditional pending verification and vocabulary reconciliation.
+
+**Next Step:** Step 38 — Initialize Plain Python Repository (`ai-agent-py`).
