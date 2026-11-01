@@ -916,3 +916,48 @@ Defined:
 **Next Step:** Step 36 — Define the Architecture Comparison Methodology.
 
 
+
+## Step 36: Define Architecture Comparison Methodology
+
+**Component/Step:** Stage 5 — Implementation Planning / Comparison Methodology
+
+**Goal:** Establish an objective, reproducible methodology for comparing the Plain Python, LangChain + LangGraph, and Rust + Rig + RustView implementations.
+
+**Problem/Friction:** The three implementations use different languages, frameworks, and orchestration approaches. Comparing them without shared criteria could produce misleading results, especially if they differ in functionality, policies, datasets, or execution conditions.
+
+**Solution:** Created `comparisons/architecture-comparison.md`.
+
+Defined:
+- Three implementation profiles.
+- Functional and contract parity requirements.
+- Architecture and modularity criteria.
+- Developer experience measurements.
+- Agent orchestration comparison.
+- Reliability and security criteria.
+- Shared evaluation metrics and acceptance thresholds.
+- Performance measurement methodology.
+- Maintainability criteria.
+- Qualitative scoring from 1 to 5.
+- Experimental controls and metadata.
+- Comparison deliverables.
+
+Established a proposed qualitative weighting model:
+- Architecture: 20%.
+- Developer experience: 10%.
+- Agent orchestration: 15%.
+- Reliability: 15%.
+- Security engineering: 15%.
+- Maintainability: 15%.
+- Operational readiness: 10%.
+
+Evaluation quality and performance remain separate measured result sets.
+
+**Trade-offs:** A common methodology improves comparability but cannot eliminate differences in framework capabilities, provider integrations, or runtime behavior. Performance results must therefore document environmental and model-related variables.
+
+**Outcome:** The portfolio has a defined method for evaluating architectural and engineering differences across all three implementations. Actual comparison will occur after implementation and evaluation.
+
+**Status:** Completed
+
+**Next Step:** Step 37 — Portfolio Readiness Review.
+
+
