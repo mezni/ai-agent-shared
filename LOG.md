@@ -878,3 +878,41 @@ Defined:
 **Next Step:** Step 35 — Define the Rust Implementation Plan.
 
 
+
+
+## Step 35: Define Rust Implementation Plan
+
+**Component/Step:** Stage 5 — Implementation Planning / Rust
+
+**Goal:** Define the technical implementation strategy for `ai-agent-rs` using Rig and RustView while conforming to shared specifications and Clean Architecture.
+
+**Problem/Friction:** The shared specifications define system behavior, but the Rust implementation requires concrete decisions about module organization, type safety, error handling, async execution, LLM integration, orchestration, UI integration, testing, and observability.
+
+**Solution:** Created and updated `implementations/ai-agent-rs.md`.
+
+Defined:
+- Rust and Cargo technology stack.
+- Rig for LLM provider integration and structured model output.
+- RustView for the browser-based user interface.
+- Modular Monolith with Clean Architecture.
+- Rust domain types, value objects, and error handling.
+- Application-owned LLM interface implemented by a Rig adapter.
+- Custom Rust agent orchestrator.
+- Explicit separation between Rig model interaction and application workflow decisions.
+- JSON-backed repositories.
+- Read-only tool adapters with application-side authorization.
+- In-memory human approval workflow.
+- RustView UI responsibilities and compatibility validation.
+- Shared evaluation datasets and result contract.
+- Security, guardrails, testing, and observability requirements.
+- Implementation sequence, risks, and trade-offs.
+
+**Trade-offs:** Rig provides reusable LLM integration and structured model interaction but introduces a framework dependency. RustView offers a Rust-native UI but requires API and version compatibility validation. Custom orchestration retains application control but increases implementation responsibility.
+
+**Outcome:** The Rust implementation plan now explicitly adopts Rig and RustView. Implementation remains deferred until the comparison methodology and portfolio readiness review are complete.
+
+**Status:** Completed — Revised technology selection.
+
+**Next Step:** Step 36 — Define the Architecture Comparison Methodology.
+
+
