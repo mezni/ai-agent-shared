@@ -527,3 +527,42 @@ Documented:
 **Next:** Step 23 — Data Protection
 
 
+## Step 23: Define Data Protection Standards
+
+**Component/Step:** Security Engineering — Data Protection
+
+**Goal:** Establish shared data protection requirements for all three AI agent implementations.
+
+**Problem/Friction:**
+The agent processes customer, ticket, order, policy, approval, and LLM-generated information. Without explicit data protection standards, sensitive information could be unnecessarily included in prompts, exposed through logs, stored insecurely, or disclosed to unauthorized users or external providers.
+
+**Solution:**
+Created `engineering/security/data-protection.md`, defining:
+
+- Data classification and protection principles.
+- Synthetic-only data requirements.
+- Data minimization and purpose limitation.
+- LLM context governance and customer isolation.
+- Encryption requirements for future deployment.
+- Secret management and environment configuration.
+- Access control and data integrity.
+- Logging and telemetry redaction.
+- Retention, deletion, display, and export controls.
+- Third-party provider assessment.
+- Incident response.
+- Clean Architecture responsibilities.
+- Python, LangChain/LangGraph, and Rust implementation requirements.
+- Security and privacy testing requirements.
+
+**Trade-offs:**
+- Synthetic-only data limits realism but avoids introducing real customer information into the portfolio.
+- Data minimization reduces exposure but requires deliberate context construction.
+- Production encryption and retention controls are documented as requirements rather than falsely represented as implemented.
+- Provider-specific data handling remains open until an LLM provider is selected.
+
+**Status:** Completed — documentation defined.
+
+**Next Step:** Step 24 — Observability Strategy.
+
+
+
