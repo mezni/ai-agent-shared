@@ -351,3 +351,33 @@ Confirmed the authoritative architectural direction: Modular Monolith + Clean Ar
 **Status:** Complete
 
 **Next:** Stage 3 — Engineering Standards, Step 15: Guardrail Strategy.
+
+## Step 15: Define Guardrail Strategy
+
+**Goal:** Establish a shared guardrail strategy for all three AI Support Agent implementations.
+
+**Problem:** LLMs can produce incorrect or malformed outputs, propose unauthorized tool operations, or generate recommendations that conflict with business rules. Prompt instructions alone cannot reliably enforce security or policy constraints.
+
+**Solution:** Created `engineering/guardrails/strategy.md`.
+
+Defined:
+- Defense-in-depth guardrail principles.
+- Input and output validation.
+- Prompt-injection defense.
+- Application-controlled tool authorization.
+- Deterministic refund policy enforcement.
+- Human approval requirements.
+- Safe failure and escalation behavior.
+- Guardrail observability and evaluation.
+- Implementation mapping across Python, LangChain/LangGraph, and Rust.
+
+**Trade-offs:**
+- Deterministic controls improve reliability and security but require explicit validation and workflow code.
+- Additional checks may increase latency and create false positives.
+- Shared guardrail requirements improve consistency but require implementation-specific adapters and tests.
+
+**Status:** Complete
+
+**Next:** Step 16 — Define Input and Output Validation Standards.
+
+
