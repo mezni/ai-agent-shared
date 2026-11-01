@@ -768,3 +768,26 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 
 
 **Next Step:** Step 31 — Define the Shared Evaluation Result Contract
+
+
+## Step 31: Define the Shared Evaluation Result Contract
+
+**Component/Step:** Shared Evaluation Infrastructure — Result Schema
+
+**Goal:** Define a common, versioned evaluation result contract for the Python, LangChain, and Rust implementations.
+
+**Problem/Friction:** Different implementations could produce incompatible evaluation outputs, making it difficult to compare classification, tool selection, policy compliance, security, and response quality.
+
+**Solution:** Created `evaluation/schemas/evaluation-result.schema.json` using JSON Schema Draft 2020-12. The contract defines implementation metadata, dataset identification, execution metadata, summary counts, standardized metrics, individual case results, check outcomes, failure details, and environment information. Added an illustrative evaluation result and validation commands.
+
+**Trade-offs:**
+- Optional metrics allow different evaluation tasks to report only relevant measurements.
+- Decimal rates between 0 and 1 provide a consistent representation across languages.
+- JSON Schema handles structural validation, while cross-field consistency rules remain the responsibility of the evaluation runner.
+- The schema is versioned independently from individual datasets so the result contract can evolve without unnecessarily changing benchmark data.
+
+**Status:** Completed
+
+**Next Step:** Step 32 — Define the Shared Evaluation Protocol
+
+
