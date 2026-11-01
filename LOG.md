@@ -604,4 +604,43 @@ Created `engineering/observability/strategy.md`, defining:
 
 **Next Step:** Step 25 — Testing Strategy.
 
+## Step 25: Define Shared Testing Strategy
+
+**Component/Step:** Engineering Standards — Testing Strategy
+
+**Goal:** Establish a consistent testing and quality assurance strategy across all three AI agent implementations.
+
+**Problem/Friction:**
+Traditional unit testing cannot fully validate an AI agent. Correctness also depends on workflow execution, LLM behavior, tool selection, deterministic business policies, security controls, and human approval. Without a shared strategy, the three implementations could produce inconsistent business outcomes.
+
+**Solution:**
+Created `engineering/testing/test-strategy.md`, defining:
+
+- Testing principles and scope.
+- Unit, integration, contract, workflow, security, evaluation, and end-to-end testing.
+- Test pyramid and test environments.
+- Shared synthetic test data.
+- Test doubles.
+- Domain and agent behavior testing.
+- Security and adversarial testing.
+- Evaluation thresholds and regression testing.
+- Cross-implementation parity testing.
+- Failure injection and performance testing.
+- UI testing.
+- CI quality gates.
+- Clean Architecture testing responsibilities.
+- Python, LangChain/LangGraph, and Rust testing tools.
+- Test reporting and Definition of Done.
+
+**Trade-offs:**
+- Deterministic tests provide reliable feedback but cannot measure all LLM behavior.
+- Dataset evaluations measure agent quality but may require more execution time and controlled model configurations.
+- Shared contracts improve consistency but require coordination when specifications change.
+- End-to-end tests provide realistic coverage but are more expensive to maintain.
+- Cross-implementation parity increases testing effort but is essential to the portfolio's comparison objective.
+
+**Status:** Completed — documentation defined.
+
+**Next Step:** Step 26 — Create Shared Synthetic Dataset.
+
 
