@@ -702,3 +702,24 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 **Next Step:** Step 28 — Create Tool Selection Evaluation Dataset
 
 
+## Step 28: Create Tool Selection Evaluation Dataset
+
+**Component/Step:** Shared Evaluation Dataset — Tool Selection
+
+**Goal:** Establish a shared benchmark to evaluate tool selection, tool ordering, no-tool decisions, clarification, and rejection of unsupported actions across all three implementations.
+
+**Problem/Friction:** Correct ticket classification does not guarantee correct tool selection. The agent could select unnecessary tools, use tools in the wrong sequence, attempt unsupported operations, or proceed without sufficient information.
+
+**Solution:** Created `evaluation/datasets/tool-selection.json` with 12 synthetic cases. The dataset covers customer lookup, order lookup, business policy lookup, deterministic refund eligibility assessment, multiple-tool sequences, no-tool decisions, clarification, and prohibited actions.
+
+**Trade-offs:**
+- The initial tool vocabulary is deliberately small and must be reconciled with the canonical agent contracts.
+- Expected tool sequences provide deterministic benchmark targets, but actual execution remains subject to application-side authorization and validation.
+- Refund eligibility assessment is allowed; real refund execution is outside the initial project scope.
+- The 12-case dataset is an initial regression baseline, not a statistically representative production benchmark.
+
+**Status:** Completed
+
+**Next Step:** Step 29 — Create Policy Compliance Evaluation Dataset
+
+
