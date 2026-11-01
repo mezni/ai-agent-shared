@@ -723,3 +723,48 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 **Next Step:** Step 29 — Create Policy Compliance Evaluation Dataset
 
 
+## Step 29: Create Policy Compliance Evaluation Dataset
+
+**Component/Step:** Shared Evaluation Dataset — Policy Compliance
+
+**Goal:** Establish a shared benchmark for verifying deterministic business policy enforcement and human approval requirements across all three implementations.
+
+**Problem/Friction:** An agent can classify a request and select the correct tools while still producing a recommendation that violates the return window, refund cap, evidence requirements, or approval workflow.
+
+**Solution:** Created `evaluation/datasets/policy-compliance.json` with 12 synthetic cases covering the 30-calendar-day return window, CAD 100 refund cap, damaged-item image verification, human approval, invalid approval, rejected approval, and input validation.
+
+**Trade-offs:**
+- A fixed reference date makes date-based evaluations reproducible but requires deliberate updates when the dataset is versioned.
+- Eligibility and approval are evaluated separately to prevent approval status from overriding business policy.
+- Image verification is represented as a test input status; actual image authenticity and content verification require a separately defined verification mechanism.
+- Approval permits an approved recommendation but does not authorize real financial execution in the initial project scope.
+- The 12 cases provide an initial regression baseline, not comprehensive policy coverage.
+
+**Status:** Completed
+
+**Next Step:** Step 30 — Create Adversarial Evaluation Dataset
+
+
+
+## Step 30: Create Adversarial Evaluation Dataset
+
+**Component/Step:** Shared Evaluation Dataset — Adversarial Cases
+
+**Goal:** Establish a shared security benchmark to evaluate resistance to prompt injection, unauthorized access, policy manipulation, approval bypass, and information disclosure.
+
+**Problem/Friction:** Normal functional test cases do not adequately test malicious or untrusted inputs. An agent may follow instructions embedded in tickets or retrieved content, disclose restricted information, or attempt actions outside its authorized scope.
+
+**Solution:** Created `evaluation/datasets/adversarial-cases.json` with 12 synthetic adversarial cases. The dataset covers direct and indirect prompt injection, cross-customer access, unauthorized tool requests, approval bypass, prompt and secret disclosure, policy manipulation, tool argument manipulation, mixed requests, untrusted tool results, and invalid LLM output.
+
+**Trade-offs:**
+- The dataset tests expected security behavior but does not replace security testing of actual application authorization and tool adapters.
+- Adversarial examples are synthetic and must be expanded as new attack patterns are discovered.
+- Some cases require application-level enforcement rather than an LLM response alone.
+- Safe failure may reduce availability for ambiguous or malformed requests, but preserves security and policy integrity.
+
+**Status:** Completed
+
+
+
+
+**Next Step:** Step 31 — Define the Shared Evaluation Result Contract
