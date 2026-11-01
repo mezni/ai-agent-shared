@@ -321,3 +321,33 @@ Documented:
 **Status:** Complete
 
 **Next:** Step 14 — Architecture Decision Records (ADRs).
+
+
+## Step 14: Architecture Decision Records
+
+**Goal:** Formalize the architectural decisions that guide the AI Support Agent portfolio.
+
+**Problem:** Architecture documentation describes system structure but does not consistently capture the rationale, alternatives, trade-offs and consequences behind major design choices.
+
+**Solution:** Created five Architecture Decision Records and an ADR index:
+
+- ADR-001: Repository Strategy.
+- ADR-002: Modular Monolith.
+- ADR-003: Clean Architecture.
+- ADR-004: Agent Orchestration.
+- ADR-005: Human Approval and Shared Evaluation.
+
+Documented context, decision drivers, alternatives, decisions, consequences, risks and mitigations.
+
+Confirmed the authoritative architectural direction: Modular Monolith + Clean Architecture. The three implementations share business requirements and evaluation standards while retaining independent technology implementations.
+
+**Trade-offs:**
+- Four repositories improve separation but require cross-repository coordination.
+- Modular Monolith reduces infrastructure complexity but requires internal dependency discipline.
+- Clean Architecture introduces abstractions in exchange for testability and framework independence.
+- Application-controlled orchestration is more explicit than unrestricted autonomous agents.
+- Human approval adds workflow complexity but preserves oversight.
+
+**Status:** Complete
+
+**Next:** Stage 3 — Engineering Standards, Step 15: Guardrail Strategy.
