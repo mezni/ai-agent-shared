@@ -307,7 +307,7 @@
           "refund_eligibility": "ELIGIBLE",
           "approval_status": "APPROVED",
           "approval_reviewer_id": null,
-          "requested_refund_amount": 250.00,
+          "requested_refund_amount": 250.0,
           "currency": "CAD"
         }
       },

@@ -27,9 +27,7 @@
       },
       "expected": {
         "decision": "CALL_TOOLS",
-        "tool_calls": [
-          "customer_lookup"
-        ]
+        "tool_calls": ["customer_lookup"]
       },
       "metadata": {
         "difficulty": "easy",
@@ -47,9 +45,7 @@
       },
       "expected": {
         "decision": "CALL_TOOLS",
-        "tool_calls": [
-          "order_lookup"
-        ]
+        "tool_calls": ["order_lookup"]
       },
       "metadata": {
         "difficulty": "easy",
@@ -66,9 +62,7 @@
       },
       "expected": {
         "decision": "CALL_TOOLS",
-        "tool_calls": [
-          "business_policy_lookup"
-        ]
+        "tool_calls": ["business_policy_lookup"]
       },
       "metadata": {
         "difficulty": "easy",
@@ -117,7 +111,11 @@
       },
       "metadata": {
         "difficulty": "hard",
-        "tags": ["damaged_item", "refund_assessment", "image_verification_required"]
+        "tags": [
+          "damaged_item",
+          "refund_assessment",
+          "image_verification_required"
+        ]
       }
     },
     {
@@ -131,9 +129,7 @@
       },
       "expected": {
         "decision": "CALL_TOOLS",
-        "tool_calls": [
-          "business_policy_lookup"
-        ]
+        "tool_calls": ["business_policy_lookup"]
       },
       "metadata": {
         "difficulty": "medium",
@@ -245,7 +241,11 @@
       },
       "metadata": {
         "difficulty": "hard",
-        "tags": ["prompt_injection", "cross_customer_access", "unauthorized_action"]
+        "tags": [
+          "prompt_injection",
+          "cross_customer_access",
+          "unauthorized_action"
+        ]
       }
     }
   ]

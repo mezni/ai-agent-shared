@@ -846,3 +846,35 @@ Defined:
 **Next Step:** Step 34 — Define the LangChain + LangGraph Implementation Plan.
 
 
+## Step 34: Define LangChain + LangGraph Implementation Plan
+
+**Component/Step:** Stage 5 — Implementation Planning / LangChain + LangGraph
+
+**Goal:** Define the implementation strategy for `ai-agent-lc` using LangChain, LangGraph, and Streamlit while maintaining the shared Clean Architecture and domain contracts.
+
+**Problem/Friction:** The shared specifications establish system requirements, but the framework-based implementation needs an explicit strategy for model integration, graph state, workflow transitions, checkpointing, tool execution, and human approval.
+
+**Solution:** Created `implementations/ai-agent-lc.md`.
+
+Defined:
+- LangChain responsibilities for model integration, prompts, structured output, and tools.
+- LangGraph responsibilities for workflow orchestration and state management.
+- Framework-independent domain and application layers.
+- Graph nodes, state fields, and conditional transitions.
+- Human approval using interrupt/resume.
+- In-memory checkpointing for initial development.
+- Read-only tool integration and application-side authorization.
+- JSON fixture repositories.
+- Shared evaluation datasets and result contract.
+- Security, guardrail, testing, and observability requirements.
+- Implementation sequence and architecture trade-offs.
+
+**Trade-offs:** LangGraph provides explicit workflow state and interrupt/resume capabilities but introduces framework and state-management complexity. In-memory checkpointing simplifies initial development but does not provide durable recovery across process restarts.
+
+**Outcome:** The LangChain + LangGraph implementation has a documented technical plan. Implementation remains deferred until the remaining implementation plans and portfolio readiness review are complete.
+
+**Status:** Completed
+
+**Next Step:** Step 35 — Define the Rust Implementation Plan.
+
+

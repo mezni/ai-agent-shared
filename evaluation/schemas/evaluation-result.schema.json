@@ -28,11 +28,7 @@
     },
     "run_status": {
       "type": "string",
-      "enum": [
-        "COMPLETED",
-        "FAILED",
-        "CANCELLED"
-      ]
+      "enum": ["COMPLETED", "FAILED", "CANCELLED"]
     },
     "implementation": {
       "$ref": "#/$defs/implementation"
@@ -63,61 +59,35 @@
     "implementation": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "implementation_id",
-        "language",
-        "framework"
-      ],
+      "required": ["implementation_id", "language", "framework"],
       "properties": {
         "implementation_id": {
           "type": "string",
-          "enum": [
-            "ai-agent-py",
-            "ai-agent-lc",
-            "ai-agent-rs"
-          ]
+          "enum": ["ai-agent-py", "ai-agent-lc", "ai-agent-rs"]
         },
         "language": {
           "type": "string",
-          "enum": [
-            "python",
-            "rust"
-          ]
+          "enum": ["python", "rust"]
         },
         "framework": {
           "type": "string",
-          "enum": [
-            "plain-python",
-            "langchain-langgraph",
-            "rustview"
-          ]
+          "enum": ["plain-python", "langchain-langgraph", "rustview"]
         },
         "application_version": {
           "type": "string"
         },
         "model_provider": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "model_name": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     "dataset": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "dataset_id",
-        "dataset_version",
-        "task",
-        "total_cases"
-      ],
+      "required": ["dataset_id", "dataset_version", "task", "total_cases"],
       "properties": {
         "dataset_id": {
           "type": "string",
@@ -148,20 +118,14 @@
     "execution": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "started_at",
-        "duration_ms"
-      ],
+      "required": ["started_at", "duration_ms"],
       "properties": {
         "started_at": {
           "type": "string",
           "format": "date-time"
         },
         "completed_at": {
-          "type": [
-            "string",
-            "null"
-          ],
+          "type": ["string", "null"],
           "format": "date-time"
         },
         "duration_ms": {
@@ -169,29 +133,17 @@
           "minimum": 0
         },
         "git_commit": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         },
         "configuration_id": {
-          "type": [
-            "string",
-            "null"
-          ]
+          "type": ["string", "null"]
         }
       }
     },
     "summary": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "total",
-        "passed",
-        "failed",
-        "errors",
-        "skipped"
-      ],
+      "required": ["total", "passed", "failed", "errors", "skipped"],
       "properties": {
         "total": {
           "type": "integer",
@@ -280,13 +232,7 @@
     "caseResult": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "case_id",
-        "status",
-        "expected",
-        "actual",
-        "checks"
-      ],
+      "required": ["case_id", "status", "expected", "actual", "checks"],
       "properties": {
         "case_id": {
           "type": "string",
@@ -294,12 +240,7 @@
         },
         "status": {
           "type": "string",
-          "enum": [
-            "PASS",
-            "FAIL",
-            "ERROR",
-            "SKIPPED"
-          ]
+          "enum": ["PASS", "FAIL", "ERROR", "SKIPPED"]
         },
         "expected": {
           "type": "object"
@@ -332,11 +273,7 @@
     "check": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "check_id",
-        "name",
-        "passed"
-      ],
+      "required": ["check_id", "name", "passed"],
       "properties": {
         "check_id": {
           "type": "string",
@@ -356,11 +293,7 @@
     "failure": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "failure_code",
-        "severity",
-        "message"
-      ],
+      "required": ["failure_code", "severity", "message"],
       "properties": {
         "failure_code": {
           "type": "string",
@@ -368,13 +301,7 @@
         },
         "severity": {
           "type": "string",
-          "enum": [
-            "INFO",
-            "LOW",
-            "MEDIUM",
-            "HIGH",
-            "CRITICAL"
-          ]
+          "enum": ["INFO", "LOW", "MEDIUM", "HIGH", "CRITICAL"]
         },
         "message": {
           "type": "string",
@@ -397,11 +324,7 @@
         },
         "environment_name": {
           "type": "string",
-          "enum": [
-            "local",
-            "ci",
-            "staging"
-          ]
+          "enum": ["local", "ci", "staging"]
         }
       }
     }

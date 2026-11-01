@@ -6,7 +6,7 @@
   "currency": "CAD",
   "policy_baseline": {
     "return_window_calendar_days": 30,
-    "maximum_refund_amount_per_transaction": 100.00,
+    "maximum_refund_amount_per_transaction": 100.0,
     "damaged_item_image_verification_required": true,
     "human_approval_required_for_sensitive_recommendations": true
   },
@@ -16,7 +16,7 @@
       "input": {
         "purchase_date": "2026-10-15",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 75.00,
+        "requested_refund_amount": 75.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -38,7 +38,7 @@
       "input": {
         "purchase_date": "2026-10-01",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 50.00,
+        "requested_refund_amount": 50.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -60,7 +60,7 @@
       "input": {
         "purchase_date": "2026-09-30",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 50.00,
+        "requested_refund_amount": 50.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -82,7 +82,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 100.00,
+        "requested_refund_amount": 100.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -126,7 +126,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 80.00,
+        "requested_refund_amount": 80.0,
         "currency": "CAD",
         "item_condition": "DAMAGED",
         "image_verification": "NOT_PROVIDED",
@@ -148,7 +148,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 80.00,
+        "requested_refund_amount": 80.0,
         "currency": "CAD",
         "item_condition": "DAMAGED",
         "image_verification": "VERIFIED",
@@ -170,7 +170,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 80.00,
+        "requested_refund_amount": 80.0,
         "currency": "CAD",
         "item_condition": "DAMAGED",
         "image_verification": "REJECTED",
@@ -192,7 +192,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 75.00,
+        "requested_refund_amount": 75.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -215,7 +215,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 75.00,
+        "requested_refund_amount": 75.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -238,7 +238,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": 75.00,
+        "requested_refund_amount": 75.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
@@ -261,7 +261,7 @@
       "input": {
         "purchase_date": "2026-10-20",
         "reference_date": "2026-10-31",
-        "requested_refund_amount": -10.00,
+        "requested_refund_amount": -10.0,
         "currency": "CAD",
         "item_condition": "GOOD",
         "image_verification": "NOT_REQUIRED",
