@@ -267,3 +267,27 @@ docs(ai-agent-shared): define shared domain model
 **Status:** Completed
 
 **Next:** Step 12 — Define Sequence Diagrams.
+
+
+## Step 12: Define Sequence Diagrams
+
+**Goal:** Document the runtime interactions between actors, application workflows, domain services, adapters, frameworks and external systems.
+
+**Problem:** The component architecture explains the static organization of the system but does not explain the order of runtime interactions, approval handling, error handling or security enforcement.
+
+**Solution:** Created `architecture/sequence-diagrams.md` with four Mermaid sequence diagrams:
+- Main ticket-processing workflow.
+- Human approval workflow.
+- Error handling and safe failure.
+- Security and untrusted ticket content.
+
+Documented the distinction between runtime calls and source-code dependency direction under Clean Architecture. Added implementation mapping, traceability and Definition of Done.
+
+**Trade-offs:**
+- Detailed diagrams improve implementation clarity but require maintenance when workflows change.
+- The diagrams describe technology-neutral business behavior while allowing implementation-specific workflow mechanisms.
+- Failure handling prioritizes safe outcomes over automatic completion.
+
+**Status:** Complete
+
+**Next:** Step 13 — Define Deployment Architecture.
