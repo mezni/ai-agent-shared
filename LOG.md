@@ -507,3 +507,23 @@ Documented:
 **Next:** Step 22 — Authentication and Authorization
 
 
+
+## Step 22: Define Authentication and Authorization
+
+**Goal:** Define trusted user identity, role-based access control, resource-level permissions, and approval authority.
+
+**Problem:** Authentication alone does not prevent users from accessing resources or performing operations beyond their responsibilities. UI-level restrictions and LLM instructions cannot enforce security.
+
+**Solution:** Created `engineering/security/authentication-authorization.md` defining three roles (`SUPPORT_AGENT`, `SUPERVISOR`, `ADMIN`), authentication requirements, RBAC, resource-level authorization, tool permissions, human approval, separation of duties, audit events, and implementation-specific requirements.
+
+**Trade-offs:**
+- RBAC simplifies permission management but requires resource-level checks for fine-grained access.
+- Separation of duties improves approval integrity but adds workflow complexity.
+- JWT provides portable identity claims but requires careful signature, issuer, audience, and expiration validation.
+- Centralized application-side enforcement improves consistency but requires disciplined integration across every protected use case.
+
+**Status:** Complete
+
+**Next:** Step 23 — Data Protection
+
+
