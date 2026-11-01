@@ -230,3 +230,21 @@ docs(ai-agent-shared): define shared domain model
 **Status:** Completed
 
 **Next:** Stage 1 review, followed by Step 10 — Define System Context.
+
+
+## Step 10: Define System Context
+
+**Goal:** Establish the system boundary, actors, external dependencies, and information exchanges.
+
+**Problem:** Without a shared context, the three implementations could make inconsistent assumptions about users, external services, and system responsibilities.
+
+**Solution:** Created `architecture/system-context.md` using the C4 Level 1 System Context model. Documented Support Agent, Supervisor, Administrator, the AI Customer Support & Ticket Resolution Agent, and the external LLM Provider. Distinguished initial synthetic JSON fixtures from future external CRM, OMS, identity, persistence, and observability integrations.
+
+**Trade-offs:**
+- A high-level context diagram clarifies system responsibilities but intentionally does not describe internal classes or deployment topology.
+- Future integrations are visible without making them initial implementation dependencies.
+- The LLM remains an external language service; application policy and authorization remain internal.
+
+**Status:** Completed
+
+**Next:** Step 11 — Define Component Architecture.
