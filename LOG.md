@@ -791,3 +791,25 @@ The dataset includes order inquiries, refund requests, damaged-item reports, mis
 **Next Step:** Step 32 — Define the Shared Evaluation Protocol
 
 
+## Step 32: Define the Shared Evaluation Protocol
+
+**Component/Step:** Shared Evaluation Infrastructure — Evaluation Protocol
+
+**Goal:** Establish a standardized, reproducible evaluation process for the Python, LangChain, and Rust implementations.
+
+**Problem/Friction:** Shared datasets and a common result schema do not guarantee comparable results if implementations calculate metrics differently, handle failures inconsistently, or use different acceptance criteria.
+
+**Solution:** Created `evaluation/evaluation-protocol.md`. Defined evaluation levels, the standard execution lifecycle, metric calculation rules, acceptance thresholds, critical security gates, case statuses, reproducibility requirements, cross-implementation comparisons, regression evaluation, result storage, and failure investigation procedures.
+
+**Trade-offs:**
+- Independent evaluation runners preserve implementation flexibility but require strict adherence to shared definitions.
+- LLM evaluations may vary across runs, so reproducibility requires recording model and generation configurations.
+- Small synthetic datasets provide an initial regression baseline but do not establish production-level statistical confidence.
+- Performance acceptance thresholds are deferred until implementation baselines are measured.
+- Critical policy and security failures block acceptance regardless of aggregate evaluation scores.
+
+**Status:** Completed
+
+**Next Step:** Step 33 — Define the Plain Python Implementation Plan
+
+
