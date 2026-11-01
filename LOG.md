@@ -174,3 +174,22 @@ unnecessary microservices or event-sourcing infrastructure.
 
 **Git Commit:**
 docs(ai-agent-shared): define shared domain model
+
+
+
+## Step 6: Define Shared Agent Contracts
+
+**Goal:** Establish technology-neutral contracts for communication between the agent, application services, tools, policy engine, and human approval workflow.
+
+**Problem:** Three implementations using Python, LangChain/LangGraph, and Rust could develop incompatible request formats, response structures, status values, and security boundaries.
+
+**Solution:** Created `specifications/05-agent-contracts.md` defining ticket input, execution requests and results, agent decisions, tool invocations and results, refund assessments, approval requests and decisions, suggested responses, audit events, and standard errors.
+
+**Trade-offs:**
+- JSON examples provide a readable initial specification; formal JSON Schemas will be created during the shared test foundation stage.
+- Semantic versioning adds contract governance work but reduces cross-repository integration risk.
+- Application-controlled authorization is separate from model-generated tool arguments, improving security and auditability.
+
+**Status:** Completed
+
+**Next:** Step 7 — Define System Architecture.
