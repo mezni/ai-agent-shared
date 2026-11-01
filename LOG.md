@@ -986,3 +986,43 @@ Evaluation quality and performance remain separate measured result sets.
 **Status:** Readiness review documented; implementation gate is conditional pending verification and vocabulary reconciliation.
 
 **Next Step:** Step 38 — Initialize Plain Python Repository (`ai-agent-py`).
+
+
+
+# Development Log — ai-agent-py
+
+## Step 38: Initialize Plain Python Repository
+
+**Goal:** Establish a reproducible Python project foundation using uv, a src-based package layout, and development quality tools.
+
+**Problem:** Without a consistent project structure and development environment, future application modules, tests, and contributors may use inconsistent conventions.
+
+**Solution:**
+- Initialized the `ai-agent-py` Git repository.
+- Configured Python 3.12+ and uv.
+- Created an installable package under `src/ai_agent_py/`.
+- Created separate directories for application UI, unit tests, integration tests, evaluation tests, and documentation.
+- Added pytest, pytest-cov, and Ruff as development dependencies.
+- Configured pytest and Ruff in `pyproject.toml`.
+- Added a minimal package entry point and an import test.
+- Added `.gitignore`, `.python-version`, and `.env.example`.
+- Added the initial README.
+- Generated and committed `uv.lock`.
+
+**Trade-offs:**
+- Used a src layout to separate the installed package from repository files.
+- Avoided runtime dependencies until their implementation steps require them.
+- Created the Streamlit directory without introducing Streamlit prematurely.
+- Used a minimal entry point instead of implementing agent behavior before defining the domain and application layers.
+
+**Validation:**
+- `uv sync`
+- `uv run python -m ai_agent_py`
+- `uv run pytest`
+- `uv run pytest --cov=ai_agent_py --cov-report=term-missing`
+- `uv run ruff check .`
+- `uv run ruff format --check .`
+
+**Status:** Complete after all validation commands pass.
+
+**Next Step:** Step 39 — Configure Development Quality Standards.
