@@ -37,7 +37,7 @@
 | 2 | Project Overview | Completed |
 | 3 | Business Requirements | Completed |
 | 4 | Use Cases | Completed |
-| 5 | Domain Model | Pending |
+| 5 | Domain Model | Completed |
 | 6 | Agent Contracts | Pending |
 | 7 | System Architecture | Pending |
 | 8 | Definition of Done | Pending |
@@ -145,3 +145,32 @@ advanced customer support capabilities.
 
 **Git Commit:**
 docs(ai-agent-shared): define customer support use cases
+
+
+### Step 5: Design Domain Model
+
+**Goal:** Establish a shared, technology-independent business domain.
+
+**Problem:** Three implementations need consistent entities,
+relationships, business rules, and lifecycle definitions.
+
+**Solution:** Created specifications/04-domain-model.md with
+entities, value objects, enums, aggregates, relationships,
+domain services, invariants, and domain events.
+
+**Trade-offs:** Used selected DDD concepts without introducing
+unnecessary microservices or event-sourcing infrastructure.
+
+**Tests and Verification:**
+- [x] Core entities identified.
+- [x] Value objects identified.
+- [x] Enumerations defined.
+- [x] Aggregate boundaries established.
+- [x] Entity relationships documented.
+- [x] Domain invariants defined.
+- [x] Domain services identified.
+- [x] Domain events identified.
+- [x] Cross-language mapping documented.
+
+**Git Commit:**
+docs(ai-agent-shared): define shared domain model

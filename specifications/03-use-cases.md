@@ -63,6 +63,39 @@ flowchart LR
     UC7 --> UC8
 ```
 
+### 3.1 Understand the Core Workflow
+
+The following sequence shows how a refund request moves through the system.
+
+```mermaid
+sequenceDiagram
+    actor Agent as Support Agent
+    participant UI as User Interface
+    participant Orch as Orchestrator
+    participant LLM
+    participant Tools as Business Tools
+    participant Policy as Policy Engine
+    actor Supervisor
+
+    Agent->>UI: Submit ticket
+    UI->>Orch: Validated ticket
+    Orch->>LLM: Analyze ticket
+    LLM-->>Orch: Intent + entities
+    Orch->>Tools: Lookup order and customer
+    Tools-->>Orch: Business information
+    Orch->>Policy: Retrieve policy
+    Policy-->>Orch: Applicable policy
+    Orch->>Policy: Assess refund eligibility
+    Policy-->>Orch: Deterministic decision
+    Orch->>Supervisor: Recommendation + approval request
+    Supervisor->>Orch: Review recommendation
+    Supervisor->>Orch: Approval decision
+    Orch->>UI: Updated workflow status
+    UI->>Agent: Display result
+```
+
+> **Note:** The LLM does not make the refund eligibility decision. The Policy Engine does.
+
 ## 4. UC-01: Submit and Classify Ticket
 
 ### Description
