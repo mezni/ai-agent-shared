@@ -411,3 +411,60 @@ Documented:
 
 **Next:** Step 17 — Prompt Injection Defense
 
+
+
+## Step 17: Define Prompt Injection Defense
+
+**Goal:** Establish shared controls to prevent untrusted content from manipulating agent instructions, policy decisions, data access, or tool execution.
+
+**Problem:** Customer tickets, attachments, retrieved documents, and tool outputs may contain malicious or misleading instructions. Prompt-only defenses cannot reliably prevent unsafe model behavior.
+
+**Solution:** Created `engineering/guardrails/prompt-injection.md` defining trust boundaries, instruction/data separation, context minimization, tool execution checks, deterministic policy and approval integrity, output validation, safe failure, implementation mapping, testing, security signals, and incident handling.
+
+**Trade-offs:**
+- Defense-in-depth adds validation and workflow complexity but avoids relying on model compliance for security.
+- Context minimization reduces exposure but may limit available evidence.
+- Suspicious-content detection may produce false positives; deterministic authorization and policy checks remain the primary enforcement mechanisms.
+
+**Status:** Complete
+
+**Next:** Step 18 — Policy Enforcement
+
+
+
+## Step 18: Define Policy Enforcement
+
+**Goal:** Define deterministic policy evaluation and enforcement across all agent implementations.
+
+**Problem:** LLM-generated recommendations are not authoritative and must not determine refund eligibility, authorization, or approval state.
+
+**Solution:** Created `engineering/guardrails/policy-enforcement.md` covering policy sources and versioning, evaluation contracts, refund rules, rule ordering, authorization separation, human approval, tool execution enforcement, safe failure, auditability, implementation mapping, and testing.
+
+**Trade-offs:**
+- Deterministic rules improve consistency and auditability but require explicit policy updates and regression tests.
+- Failing safely may route incomplete cases to human review instead of automatically resolving them.
+- Shared policy semantics improve cross-language parity but require each implementation to maintain equivalent tests.
+
+**Status:** Complete
+
+**Next:** Step 19 — Evaluation Strategy
+
+
+## Step 19: Define Evaluation Strategy
+
+**Goal:** Establish a repeatable evaluation process for correctness, policy compliance, safety, reliability, and cross-implementation consistency.
+
+**Problem:** Fluent agent responses do not guarantee correct classification, safe tool use, policy compliance, or factual accuracy. Unit tests alone cannot measure end-to-end agent quality.
+
+**Solution:** Created `engineering/evaluation/strategy.md` defining layered testing, shared evaluation categories, dataset requirements, reproducibility, acceptance and regression criteria, human review, cross-implementation comparison, and failure handling.
+
+**Trade-offs:**
+- Layered evaluation provides broader coverage but increases test execution time.
+- Shared datasets improve comparability but require versioning and maintenance.
+- Human review captures qualitative issues but introduces reviewer effort and potential bias.
+- Repeated runs help measure nondeterminism but increase evaluation cost.
+
+**Status:** Complete
+
+**Next:** Step 20 — Evaluation Metrics
+
