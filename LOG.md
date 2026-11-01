@@ -380,4 +380,34 @@ Defined:
 
 **Next:** Step 16 — Define Input and Output Validation Standards.
 
+## Step 16: Define Input and Output Validation Standards
+
+**Goal:** Define shared validation requirements for user requests, tool arguments, LLM outputs, tool results and application responses.
+
+**Problem:** Syntactically valid data may still contain unsupported values, malformed identifiers, unauthorized tool requests or business-rule contradictions.
+
+**Solution:** Created:
+- `engineering/guardrails/input-validation.md`
+- `engineering/guardrails/output-validation.md`
+
+Documented:
+- Input validation layers and ticket request schema.
+- Agent execution request and tool argument validation.
+- Domain semantic validation.
+- Standard validation error contract.
+- LLM output validation pipeline.
+- Classification and suggested-response validation.
+- Tool proposal and tool result validation.
+- Deterministic refund assessment validation.
+- Bounded retry and safe failure behavior.
+- Cross-implementation validation testing requirements.
+
+**Trade-offs:**
+- Strict validation improves safety and consistency but may reject malformed or incomplete model outputs.
+- Multiple validation layers add code and processing overhead.
+- Shared contracts improve comparability but require synchronized implementation tests.
+
+**Status:** Complete
+
+**Next:** Step 17 — Prompt Injection Defense
 
