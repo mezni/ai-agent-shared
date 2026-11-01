@@ -36,12 +36,13 @@
 | 1 | Initialize Repository | Completed |
 | 2 | Project Overview | Completed |
 | 3 | Business Requirements | Completed |
-| 4 | Use Cases | Pending |
+| 4 | Use Cases | Completed |
 | 5 | Domain Model | Pending |
 | 6 | Agent Contracts | Pending |
 | 7 | System Architecture | Pending |
 | 8 | Definition of Done | Pending |
 | 9 | Assumptions and Open Questions | Pending |
+
 ## Step Details
 
 ### Step 1: Initialize Repository
@@ -117,3 +118,30 @@ prematurely prescribing implementation-specific technologies.
 
 **Git Commit:**
 docs(ai-agent-shared): define business and system requirements
+
+
+
+### Step 4: Define Use Cases
+
+**Goal:** Define concrete user and system workflows for the shared requirements.
+
+**Problem:** Requirements alone do not describe interactions,
+preconditions, alternative flows, or failure scenarios.
+
+**Solution:** Created specifications/03-use-cases.md with nine
+detailed use cases and requirement traceability.
+
+**Trade-offs:** Focused on the initial business scope and deferred
+advanced customer support capabilities.
+
+**Tests and Verification:**
+- [x] Actors identified.
+- [x] Use-case diagram created.
+- [x] Nine core use cases documented.
+- [x] Preconditions and triggers defined.
+- [x] Main success flows defined.
+- [x] Alternative and exception flows defined.
+- [x] Requirement traceability established.
+
+**Git Commit:**
+docs(ai-agent-shared): define customer support use cases
