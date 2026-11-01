@@ -565,4 +565,43 @@ Created `engineering/security/data-protection.md`, defining:
 **Next Step:** Step 24 — Observability Strategy.
 
 
+## Step 24: Define Observability Strategy
+
+**Component/Step:** Engineering Standards — Observability
+
+**Goal:** Establish a consistent observability strategy across the Python, LangChain/LangGraph, and Rust implementations.
+
+**Problem/Friction:**
+Agent execution involves multiple components, including classification, context retrieval, deterministic policy assessment, tools, LLM calls, validation, and human approval. Without consistent telemetry, it is difficult to diagnose failures, measure latency, trace decisions, and compare implementations.
+
+**Solution:**
+Created `engineering/observability/strategy.md`, defining:
+
+- Three observability signals: logs, traces, and metrics.
+- Standard correlation identifiers.
+- Agent execution lifecycle events.
+- Structured JSON logging conventions.
+- Workflow tracing and span requirements.
+- Operational, business, and evaluation metrics.
+- Metric cardinality restrictions.
+- Standard error categories.
+- LLM and tool execution observability.
+- Policy and approval event tracking.
+- Separation of operational logs and audit events.
+- Sampling, retention, dashboards, and alerting requirements.
+- Clean Architecture responsibilities.
+- Cross-implementation requirements.
+- Observability testing requirements.
+
+**Trade-offs:**
+- OpenTelemetry compatibility provides portability but introduces instrumentation overhead.
+- Detailed telemetry improves diagnosis but increases storage and privacy risks.
+- Correlation identifiers improve traceability but must not be used as high-cardinality metric labels.
+- Numeric alert thresholds are deferred until representative performance baselines exist.
+- Vendor-neutral standards preserve implementation flexibility.
+
+**Status:** Completed — documentation defined.
+
+**Next Step:** Step 25 — Testing Strategy.
+
 
