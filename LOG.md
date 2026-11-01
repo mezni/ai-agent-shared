@@ -291,3 +291,33 @@ Documented the distinction between runtime calls and source-code dependency dire
 **Status:** Complete
 
 **Next:** Step 13 — Define Deployment Architecture.
+
+
+## Step 13: Define Deployment Architecture
+
+**Goal:** Define how the three AI Support Agent implementations are configured, executed, and deployed.
+
+**Problem:** The system and component architectures describe application structure but do not establish deployment models, environment configuration, data access, external LLM boundaries, or operational environments.
+
+**Solution:** Created `architecture/deployment-architecture.md`.
+
+Documented:
+- Independent deployment models for `ai-agent-py`, `ai-agent-lc`, and `ai-agent-rs`.
+- Logical deployment architecture.
+- Environment configuration and secrets management.
+- Synthetic JSON data deployment.
+- External LLM provider boundary.
+- Local development, test, evaluation, and demo environments.
+- Observability and security requirements.
+- Future containerization and deployment evolution.
+- Open deployment decisions.
+
+**Trade-offs:**
+- Local execution minimizes infrastructure complexity and supports rapid development.
+- Independent applications make implementation comparisons easier.
+- JSON fixtures simplify the initial system but are not suitable as a long-term shared production datastore.
+- Containerization and cloud infrastructure are deferred until justified by implementation requirements.
+
+**Status:** Complete
+
+**Next:** Step 14 — Architecture Decision Records (ADRs).
