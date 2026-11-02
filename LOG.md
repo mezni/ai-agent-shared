@@ -1059,3 +1059,77 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 **Status:** Complete after all quality checks pass.
 
 **Next Step:** Step 40 — Implement the Domain Layer.
+
+
+## Step 40: Implement the Domain Layer
+
+**Goal:** Implement the initial business domain for the AI Customer Support and Ticket Resolution Agent using framework-independent Python.
+
+**Problem:** Without an explicit domain model, business concepts and rules can become mixed with LLM orchestration, UI, and infrastructure code. This makes the application difficult to test and maintain.
+
+**Solution:**
+- Created `domain/` package.
+- Added domain enums for agent intent, ticket status, order status, execution status, refund eligibility, approval status, and tool execution status.
+- Added image verification status.
+- Implemented immutable domain entities for customers, orders, tickets, agent decisions, refund assessments, approvals, agent executions, and tool executions.
+- Implemented the `Money` value object using `Decimal`.
+- Implemented deterministic `RefundPolicyService`.
+- Enforced the reviewer requirement for final approval decisions.
+- Added domain exceptions.
+- Created unit tests for value objects, entities, and refund policy boundaries.
+
+**Business rules implemented:**
+- 30-calendar-day return window.
+- CAD 100 maximum refund.
+- Negative and zero refund amounts rejected.
+- Damaged goods require verified image evidence.
+- Refund eligibility and human approval remain separate.
+- Policy version is recorded in the assessment.
+
+**Trade-offs:**
+- Used immutable dataclasses for predictable domain state.
+- Used `Decimal` rather than floating-point values for money.
+- Kept the domain independent of frameworks and external services.
+- Implemented a minimal model first; canonical contract reconciliation remains necessary.
+- Image verification is represented as a status, not an image-authentication implementation.
+
+**Validation:**
+- Ruff linting and formatting.
+- Domain unit tests.
+- Overall package coverage check.
+
+**Status:** Complete after validation and canonical contract reconciliation.
+
+**Next Step:** Step 41 — Implement Infrastructure and Repository Adapters.
+
+
+
+## Step 41: Implement Infrastructure and Repository Adapters
+
+**Goal:** Add read-only data access through application-defined repository interfaces and JSON fixture-backed infrastructure adapters.
+
+**Problem:** The domain and application workflows need customer, order, and ticket data without depending directly on filesystem operations or JSON representation.
+
+**Solution:**
+- Added repository interfaces for customers, orders, and tickets.
+- Implemented JSON fixture readers and repository adapters.
+- Added explicit JSON-to-domain entity mapping.
+- Added fixture error handling for missing files, invalid JSON, unexpected JSON shapes, and invalid records.
+- Added synthetic fixture directory and format documentation.
+- Added infrastructure unit tests for successful lookup, missing records, filtering, and malformed fixtures.
+- Kept repository operations read-only.
+
+**Trade-offs:**
+- JSON fixtures simplify initial development but are not a production persistence solution.
+- Explicit mapping protects domain boundaries but requires maintenance when shared contracts evolve.
+- Missing records return `None`; malformed data raises a dedicated fixture error.
+- No database or write operations are introduced in this step.
+
+**Validation:**
+- Ruff linting and formatting.
+- Infrastructure repository unit tests.
+- Overall package coverage check.
+
+**Status:** Complete after tests pass and fixture mappings are reconciled with shared contracts.
+
+**Next Step:** Step 42 — Implement LLM Integration and Provider Abstraction.
