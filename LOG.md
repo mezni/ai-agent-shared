@@ -1029,3 +1029,33 @@ Evaluation quality and performance remain separate measured result sets.
 
 
 git commit -m "chore(ai-agent-py): establish development quality standards"
+
+
+## Step 39: Configure Development Quality Standards
+
+**Goal:** Establish repeatable code quality and testing standards for the Plain Python implementation.
+
+**Problem:** Without consistent linting, formatting, test conventions, and coverage requirements, code quality can degrade as the application grows.
+
+**Solution:**
+- Expanded Ruff linting rules.
+- Configured strict pytest markers and test discovery.
+- Added branch coverage measurement with an initial 80% threshold.
+- Created a reusable quality-check script.
+- Added test marker examples.
+- Documented naming, formatting, testing, type safety, and Git conventions.
+- Defined a consistent pre-commit quality gate.
+
+**Trade-offs:**
+- An 80% initial coverage target balances quality and implementation speed.
+- Ruff provides linting and formatting without adding multiple overlapping tools.
+- Static type checking is deferred until a later engineering step.
+
+**Validation:**
+- `uv run ruff check .`
+- `uv run ruff format --check .`
+- `uv run pytest -m unit --cov=ai_agent_py --cov-report=term-missing`
+
+**Status:** Complete after all quality checks pass.
+
+**Next Step:** Step 40 — Implement the Domain Layer.
