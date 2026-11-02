@@ -1133,3 +1133,34 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 **Status:** Complete after tests pass and fixture mappings are reconciled with shared contracts.
 
 **Next Step:** Step 42 — Implement LLM Integration and Provider Abstraction.
+
+
+## Step 42: Implement LLM Integration and Provider Abstraction
+
+**Goal:** Introduce an application-owned LLM interface and a replaceable provider adapter.
+
+**Problem:** Direct provider SDK calls inside use cases would couple application workflows to a vendor and make testing, fallback strategies, and provider changes difficult.
+
+**Solution:**
+- Defined `LlmService` and request/response data contracts in the application layer.
+- Added environment-based LLM configuration.
+- Implemented an OpenAI-compatible HTTP adapter using `httpx`.
+- Added timeout configuration and provider error translation.
+- Added response shape validation and JSON-object parsing.
+- Added mocked HTTP tests for success, provider errors, invalid responses, and JSON parsing.
+- Kept LLM integration outside the domain layer.
+
+**Trade-offs:**
+- Used an OpenAI-compatible HTTP interface to support compatible providers without coupling the application to a provider SDK.
+- Deferred retries, backoff, fallback routing, and circuit breaking to later reliability work.
+- Used mocked HTTP transport for deterministic tests; live provider verification is a separate integration check.
+- Model outputs remain proposals and are not authoritative business decisions.
+
+**Validation:**
+- Ruff linting and formatting.
+- LLM adapter unit tests.
+- Overall package coverage check.
+
+**Status:** Complete after tests pass.
+
+**Next Step:** Step 43 — Implement the Custom Agent Orchestrator.
