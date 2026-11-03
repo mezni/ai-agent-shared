@@ -1164,3 +1164,38 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 **Status:** Complete after tests pass.
 
 **Next Step:** Step 43 — Implement the Custom Agent Orchestrator.
+
+
+
+
+### Step 43: Implement the Custom Agent Orchestrator
+
+**Goal:** Implement a framework-independent application workflow that coordinates ticket retrieval, LLM classification, deterministic refund assessment, and suggested response generation.
+
+**Problem:** The project has domain entities, repository adapters, and an LLM provider abstraction, but no application workflow coordinating them.
+
+**Solution:**
+- Added application DTOs for ticket-processing requests, classifications, and agent results.
+- Added application-owned error types and mapped LLM infrastructure errors to the application error contract.
+- Added JSON-object parsing and structured-output validation.
+- Implemented a custom orchestrator using repository interfaces, the LLM service interface, and the deterministic refund policy service.
+- Added safe prompt framing for untrusted ticket text.
+- Added unit tests for structured output and orchestration behavior.
+- Kept tool abstraction, full guardrails, authorization, and approval workflow for later steps.
+
+**Trade-offs:**
+- Direct repository coordination is used temporarily; Step 44 will introduce explicit agent tools.
+- The workflow is synchronous for simplicity; asynchronous execution can be introduced if required by measured workload.
+- LLM output is treated as untrusted and validated before use.
+- Refund eligibility remains deterministic; no refund or account mutation is executed.
+- Domain/contract vocabulary and method signatures must be reconciled with the shared specifications before the implementation gate is cleared.
+
+**Validation:**
+- [ ] Application unit tests pass.
+- [ ] Ruff checks pass.
+- [ ] Coverage remains at or above the project target.
+- [ ] Missing ticket and malformed LLM output fail safely.
+- [ ] Refund assessment is invoked only for refund intent.
+- [ ] No financial action is executed.
+
+
