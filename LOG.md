@@ -1269,3 +1269,37 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 - [ ] Critical guardrail failures do not return a successful result.
 
 
+
+
+### Step 46: Implement Security
+
+**Goal:** Enforce trusted actor identity, role-based permissions, and customer-scope restrictions independently of LLM decisions.
+
+**Problem:** Without application-level authorization, a caller or tool proposal could access records outside its permitted scope or invoke sensitive operations.
+
+**Solution:**
+- Added authenticated actor context and role definitions.
+- Added explicit permissions and a centralized authorization service.
+- Added customer-scope enforcement with deny-by-default behavior.
+- Added approval authorization requiring supervisor role and separation of requester/approver.
+- Integrated permission and scope checks into the orchestrator and tool execution context.
+- Added security unit tests for role permissions, scope denial, and approval separation.
+
+**Trade-offs:**
+- The initial identity context is supplied by the application/API boundary; production identity-provider integration is deferred.
+- Role permissions are centralized in code for this portfolio implementation.
+- Customer scope is explicit and restrictive by default.
+- Authorization does not itself execute or approve a refund; approval workflow is implemented separately.
+- Security tests must verify denied requests do not access repositories.
+
+**Validation:**
+- [ ] Security tests pass.
+- [ ] Tool tests pass.
+- [ ] Application tests pass.
+- [ ] Ruff checks pass.
+- [ ] Cross-customer access is denied.
+- [ ] Support agents cannot approve sensitive actions.
+- [ ] Admin role does not automatically grant approval authority.
+- [ ] Requesters cannot approve their own actions.
+
+
