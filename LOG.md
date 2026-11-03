@@ -1199,3 +1199,39 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 - [ ] No financial action is executed.
 
 
+
+
+
+
+### Step 44: Implement Agent Tools
+
+**Goal:** Provide a controlled tool layer for customer lookup, order lookup, policy lookup, and deterministic refund eligibility assessment.
+
+**Problem:** The orchestrator needs explicit application capabilities without exposing repositories or domain services directly to the LLM.
+
+**Solution:**
+- Added typed tool call/result contracts and execution context.
+- Added a registry for known tools and rejection of unknown tool names.
+- Implemented customer lookup with customer-scope checks.
+- Implemented order lookup with ownership validation.
+- Implemented business policy lookup with policy version metadata.
+- Implemented refund eligibility assessment through the deterministic domain policy service.
+- Added argument validation and bounded tool result serialization.
+- Added unit tests for registry behavior and tool validation.
+
+**Trade-offs:**
+- Tool execution is synchronous and in-process.
+- Provider-native tool calling is deferred; LLM output must be translated into validated application `ToolCall` objects.
+- Authentication/authorization policy is not complete until Step 46.
+- Repository and policy interfaces may require alignment with the current implementation.
+- No financial transaction is executed.
+
+**Validation:**
+- [ ] Tool unit tests pass.
+- [ ] Unknown tools are rejected.
+- [ ] Invalid arguments are rejected.
+- [ ] Cross-customer access is denied.
+- [ ] Refund eligibility is determined only by domain policy.
+- [ ] Quality checks pass.
+
+
