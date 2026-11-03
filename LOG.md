@@ -1235,3 +1235,37 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 - [ ] Quality checks pass.
 
 
+
+
+### Step 45: Implement Guardrails
+
+**Goal:** Add defense-in-depth validation and fail-closed behavior around agent inputs, LLM outputs, tool calls, and suggested responses.
+
+**Problem:** LLM-generated content and customer-provided ticket text are untrusted. Without application-level validation, malformed outputs or unsafe tool proposals could enter the workflow.
+
+**Solution:**
+- Added application guardrail exception types.
+- Added request and ticket-text validation.
+- Added untrusted-context serialization for ticket and retrieved data.
+- Added an allowlist for supported tool names.
+- Added basic suggested-response validation.
+- Integrated input/output guardrails into the orchestrator.
+- Added unit tests for invalid inputs, outputs, and tool proposals.
+
+**Trade-offs:**
+- Prompt framing is not treated as a complete prompt-injection defense.
+- Tool allowlisting does not replace tool-level authorization.
+- Basic response validation does not prove factual grounding.
+- Authorization, deterministic policy enforcement, and human approval remain separate controls.
+- Guardrail failures must fail closed rather than produce a successful agent result.
+
+**Validation:**
+- [ ] Guardrail tests pass.
+- [ ] Application unit tests pass.
+- [ ] Ruff checks pass.
+- [ ] Empty and oversized inputs are rejected.
+- [ ] Unknown tool calls are rejected.
+- [ ] Invalid suggested responses are rejected.
+- [ ] Critical guardrail failures do not return a successful result.
+
+
