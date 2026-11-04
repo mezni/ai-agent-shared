@@ -1303,3 +1303,40 @@ git commit -m "chore(ai-agent-py): establish development quality standards"
 - [ ] Requesters cannot approve their own actions.
 
 
+
+
+
+### Step 47: Implement Human Approval Workflow
+
+**Goal:** Implement a controlled human approval workflow for sensitive actions.
+
+**Problem:** Sensitive recommendations must not proceed solely because an LLM proposes them. A trusted human reviewer must make an explicit decision.
+
+**Solution:**
+- Added approval request, review request, and approval view contracts.
+- Added an application-owned approval repository interface.
+- Implemented an in-memory approval repository.
+- Implemented approval creation, review, expiration, and decision-state validation.
+- Enforced supervisor approval authority and separation of requester/reviewer.
+- Enforced customer scope for approval requests and reviews.
+- Added an approval gate that checks decision status and action/resource matching.
+- Added tests for approval lifecycle, authorization, expiration, and duplicate decisions.
+
+**Trade-offs:**
+- Approval state is process-local and is lost when the application restarts.
+- Production storage must support atomic pending-to-decided transitions.
+- Approval records do not trigger financial execution.
+- Refund eligibility remains an independent deterministic prerequisite.
+- The authenticated actor, not a client-supplied reviewer ID, is the identity source.
+
+**Validation:**
+- [ ] Approval creation requires an authorized actor.
+- [ ] Only an authorized supervisor can approve.
+- [ ] Self-approval is denied.
+- [ ] Duplicate decisions are rejected.
+- [ ] Expired approvals cannot authorize an action.
+- [ ] Rejected approvals cannot authorize an action.
+- [ ] Customer scope is enforced.
+- [ ] Approval tests and quality checks pass.
+
+
